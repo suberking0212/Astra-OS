@@ -1,0 +1,1860 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AstraOS Agent Workspace Preview</title>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,wght@1,500;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap");
+
+    :root {
+      color-scheme: dark;
+      --bg: #22241f;
+      --bg-deep: #171816;
+      --surface: #2b2d29;
+      --surface-raised: #393b36;
+      --surface-soft: #454741;
+      --line: rgba(255, 255, 255, 0.07);
+      --line-strong: rgba(255, 255, 255, 0.13);
+      --text: #f1f0eb;
+      --muted: #a7a49e;
+      --faint: #77746d;
+      --ink: #161715;
+      --green: #87d99b;
+      --green-deep: #4d765b;
+      --cyan: #7fd8df;
+      --gold: #b7ad78;
+      --danger: #f15461;
+      --white-button: #eeece6;
+      --radius: 8px;
+      --pill: 999px;
+      --shadow: 0 24px 70px rgba(0, 0, 0, 0.3);
+      --workspace-sidebar: 296px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      overflow-x: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 16px;
+      letter-spacing: 0.006em;
+      word-spacing: 0.035em;
+      line-height: 1.5;
+    }
+
+    button,
+    input,
+    textarea {
+      font: inherit;
+    }
+
+    button,
+    .clickable {
+      cursor: pointer;
+    }
+
+    button {
+      border: 0;
+      background: transparent;
+      color: inherit;
+      padding: 0;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .skip-link {
+      position: fixed;
+      left: 18px;
+      top: -60px;
+      z-index: 20;
+      border-radius: var(--pill);
+      background: var(--white-button);
+      color: var(--ink);
+      padding: 10px 16px;
+      transition: top 180ms ease;
+    }
+
+    .skip-link:focus {
+      top: 18px;
+    }
+
+    .icon {
+      width: 22px;
+      height: 22px;
+      flex: 0 0 22px;
+      fill: none;
+      stroke: currentColor;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 2;
+    }
+
+    .app {
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 50% 20%, rgba(255, 255, 255, 0.035), transparent 36rem),
+        linear-gradient(180deg, #242620 0%, #21231f 58%, #1e201c 100%);
+    }
+
+    .view {
+      display: none;
+      min-height: 100vh;
+    }
+
+    .view.active {
+      display: block;
+    }
+
+    .onboarding {
+      position: relative;
+      min-height: 100vh;
+      padding: 28px clamp(22px, 4.8vw, 92px) 44px;
+      overflow: hidden;
+    }
+
+    .top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      min-height: 48px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      min-width: 170px;
+      font-weight: 650;
+      letter-spacing: 0;
+    }
+
+    .brand-mark {
+      position: relative;
+      width: 38px;
+      height: 38px;
+      border-radius: 50% 45% 47% 52%;
+      background: linear-gradient(145deg, #90d1a4, #55765f 72%);
+      box-shadow: inset -10px -12px 22px rgba(0, 0, 0, 0.22), inset 8px 8px 18px rgba(255, 255, 255, 0.16);
+    }
+
+    .brand-mark::before,
+    .brand-mark::after {
+      content: "";
+      position: absolute;
+      top: 12px;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #f7f7f2;
+      box-shadow: inset 2px -1px 0 rgba(0, 0, 0, 0.48);
+    }
+
+    .brand-mark::before {
+      left: 13px;
+    }
+
+    .brand-mark::after {
+      left: 24px;
+    }
+
+    .brand-name {
+      font-size: 32px;
+      line-height: 1;
+    }
+
+    .progress {
+      position: absolute;
+      left: 50%;
+      top: 38px;
+      display: flex;
+      gap: 10px;
+      transform: translateX(-50%);
+    }
+
+    .progress span {
+      width: 142px;
+      height: 5px;
+      border-radius: var(--pill);
+      background: rgba(255, 255, 255, 0.9);
+    }
+
+    .account {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 170px;
+      justify-content: flex-end;
+      color: var(--muted);
+      font-size: 16px;
+      font-weight: 400;
+    }
+
+    .circle-button {
+      display: inline-grid;
+      width: 54px;
+      height: 54px;
+      place-items: center;
+      border: 1px solid var(--line-strong);
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.085);
+      color: #d4d4d0;
+      transition: background 180ms ease, border-color 180ms ease, color 180ms ease;
+    }
+
+    .circle-button:hover,
+    .circle-button:focus-visible {
+      border-color: rgba(255, 255, 255, 0.26);
+      background: rgba(255, 255, 255, 0.16);
+      color: white;
+      outline: none;
+    }
+
+    .back {
+      position: absolute;
+      left: clamp(22px, 4.8vw, 92px);
+      top: 176px;
+    }
+
+    .hero {
+      display: grid;
+      justify-items: center;
+      max-width: 900px;
+      margin: 58px auto 0;
+      text-align: center;
+    }
+
+    .hero h1 {
+      max-width: 720px;
+      margin: 0;
+      font-family: "Bodoni Moda", Didot, Georgia, serif;
+      font-size: clamp(50px, 5vw, 66px);
+      font-style: italic;
+      font-weight: 500;
+      letter-spacing: 0;
+      word-spacing: 0;
+      line-height: 0.95;
+    }
+
+    .hero p {
+      margin: 20px 0 0;
+      color: var(--muted);
+      font-size: 18px;
+      font-weight: 400;
+      letter-spacing: 0;
+    }
+
+    .agent-stage {
+      display: grid;
+      grid-template-columns: 54px minmax(0, 1fr) 54px;
+      align-items: center;
+      width: min(680px, 100%);
+      margin: 64px auto 0;
+    }
+
+    .agent-orbs {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(80px, 1fr));
+      align-items: end;
+      justify-items: center;
+      gap: clamp(22px, 4.5vw, 58px);
+    }
+
+    .orb {
+      position: relative;
+      width: var(--size);
+      height: var(--size);
+      display: grid;
+      place-items: center;
+      opacity: 0.72;
+      transform: translateY(6px);
+      transition: transform 240ms ease, opacity 240ms ease, filter 240ms ease;
+      will-change: transform, opacity;
+    }
+
+    .orb::after {
+      content: "";
+      position: absolute;
+      left: 16%;
+      right: 16%;
+      bottom: 2%;
+      height: 10%;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.28);
+      filter: blur(11px);
+    }
+
+    .orb.active {
+      opacity: 1;
+      filter: saturate(1.15);
+      transform: translateY(-8px);
+    }
+
+    .avatar-scene {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      border-radius: 34%;
+      background:
+        radial-gradient(circle at 34% 18%, rgba(255, 255, 255, 0.2), transparent 19%),
+        radial-gradient(circle at 54% 56%, color-mix(in srgb, var(--shirt) 58%, white 7%), var(--glow) 76%);
+      box-shadow:
+        inset -18px -24px 34px rgba(0, 0, 0, 0.24),
+        inset 10px 14px 24px rgba(255, 255, 255, 0.13),
+        0 18px 36px rgba(0, 0, 0, 0.2);
+      overflow: hidden;
+      transform-origin: center bottom;
+    }
+
+    .avatar-art {
+      position: absolute;
+      inset: 7%;
+      display: grid;
+      place-items: center;
+      transform-origin: center;
+    }
+
+    .avatar-art svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+      filter: drop-shadow(0 9px 10px rgba(0, 0, 0, 0.18));
+      transform: scale(1.22);
+      transform-origin: center;
+    }
+
+    .avatar-glint {
+      position: absolute;
+      left: 18%;
+      top: 12%;
+      width: 20%;
+      height: 12%;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.18);
+      filter: blur(5px);
+      transform: rotate(-18deg);
+    }
+
+    .agent-copy {
+      display: grid;
+      justify-items: center;
+      min-height: 144px;
+      margin-top: 30px;
+      text-align: center;
+    }
+
+    .agent-name {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0;
+      font-size: 32px;
+      font-weight: 600;
+      letter-spacing: 0;
+      line-height: 1.1;
+    }
+
+    .agent-role {
+      margin: 7px 0 0;
+      color: var(--muted);
+      font-size: 17px;
+      font-weight: 400;
+    }
+
+    .agent-line {
+      max-width: 500px;
+      margin: 14px 0 0;
+      color: #aaa9a5;
+      font-size: 16px;
+      line-height: 1.45;
+    }
+
+    .dots {
+      display: flex;
+      gap: 9px;
+      justify-content: center;
+      margin-top: 18px;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.86);
+      padding: 0;
+      transition: background 180ms ease, transform 180ms ease;
+    }
+
+    .dot.active {
+      background: var(--green);
+      transform: scale(1.08);
+    }
+
+    .cta {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: min(520px, 100%);
+      min-height: 62px;
+      margin-top: 28px;
+      border-radius: var(--pill);
+      background: var(--white-button);
+      color: #4a4a47;
+      padding: 14px 34px;
+      font-size: 20px;
+      font-weight: 500;
+      letter-spacing: 0;
+      transition: background 180ms ease, color 180ms ease, transform 180ms ease;
+    }
+
+    .cta:hover,
+    .cta:focus-visible {
+      background: white;
+      color: #111;
+      outline: none;
+      transform: translateY(-1px);
+    }
+
+    .secondary-link {
+      margin-top: 16px;
+      border-radius: var(--pill);
+      background: transparent;
+      color: var(--muted);
+      padding: 9px 14px;
+      transition: color 180ms ease, background 180ms ease;
+    }
+
+    .secondary-link:hover,
+    .secondary-link:focus-visible {
+      background: rgba(255, 255, 255, 0.06);
+      color: #e7e7e2;
+      outline: none;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: var(--workspace-sidebar) minmax(0, 1fr);
+      min-height: 100vh;
+      background: #22241f;
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 0;
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      height: 100vh;
+      border-right: 1px solid var(--line);
+      background: rgba(35, 37, 34, 0.98);
+    }
+
+    .sidebar-head {
+      padding: 24px 22px 20px;
+    }
+
+    .inbox-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid var(--line);
+      padding: 20px 22px;
+      color: var(--muted);
+      font-size: 17px;
+    }
+
+    .inbox-name {
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .red-dot {
+      position: relative;
+    }
+
+    .red-dot::after {
+      content: "";
+      position: absolute;
+      right: -3px;
+      top: -3px;
+      width: 10px;
+      height: 10px;
+      border: 2px solid var(--bg);
+      border-radius: 50%;
+      background: var(--danger);
+    }
+
+    .nav-area {
+      padding: 22px 10px;
+    }
+
+    .section-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 0 12px 12px;
+      color: #85837f;
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .task-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      width: 100%;
+      min-height: 54px;
+      border-radius: 16px;
+      background: #1b1c1a;
+      color: #eeeeeb;
+      padding: 0 14px;
+      text-align: left;
+      font-size: 16px;
+      font-weight: 600;
+      transition: background 180ms ease, color 180ms ease;
+    }
+
+    .task-item:hover,
+    .task-item:focus-visible {
+      background: #171816;
+      outline: none;
+    }
+
+    .new-task {
+      align-self: end;
+      justify-self: center;
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      min-height: 58px;
+      margin-bottom: 22px;
+      border-radius: var(--pill);
+      background: var(--white-button);
+      color: #444440;
+      padding: 0 24px;
+      font-size: 18px;
+      font-weight: 500;
+    }
+
+    .profile {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 78px;
+      border-top: 1px solid var(--line);
+      padding: 0 20px;
+    }
+
+    .profile-main {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .avatar {
+      display: grid;
+      width: 42px;
+      height: 42px;
+      place-items: center;
+      border-radius: 50%;
+      background: #f03888;
+      color: white;
+      font-weight: 700;
+    }
+
+    .plan {
+      border: 1px solid var(--line-strong);
+      border-radius: var(--pill);
+      color: var(--muted);
+      padding: 2px 10px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .work-main {
+      position: relative;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      min-height: 100vh;
+      padding: 22px 38px 30px;
+    }
+
+    .work-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      min-height: 52px;
+    }
+
+    .task-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+      color: #d8d7d4;
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: 0;
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .credit-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      min-height: 52px;
+      border: 1px solid var(--line-strong);
+      border-radius: var(--pill);
+      background: rgba(255, 255, 255, 0.13);
+      color: #eeeeeb;
+      padding: 0 7px 0 18px;
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .upgrade {
+      display: inline-flex;
+      align-items: center;
+      min-height: 42px;
+      border-radius: var(--pill);
+      background: var(--white-button);
+      color: #242421;
+      padding: 0 18px;
+      font-weight: 650;
+    }
+
+    .conversation {
+      display: grid;
+      align-content: start;
+      justify-items: center;
+      padding-top: 34px;
+    }
+
+    .time {
+      margin-bottom: 20px;
+      color: #8d8b87;
+      font-size: 15px;
+    }
+
+    .user-bubble {
+      width: min(620px, 90%);
+      border-radius: 18px;
+      background: #181917;
+      color: #e4e3df;
+      padding: 17px 22px;
+      font-size: 20px;
+      line-height: 1.5;
+      letter-spacing: 0;
+    }
+
+    .run-feed {
+      width: min(710px, 90%);
+      margin-top: 20px;
+      color: #92908c;
+    }
+
+    .run-line {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      margin-top: 9px;
+      font-size: 16px;
+    }
+
+    .spinner {
+      width: 17px;
+      height: 17px;
+      border: 2px solid rgba(143, 213, 163, 0.24);
+      border-left-color: #75d690;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    .trace-card {
+      width: min(640px, 100%);
+      margin: 8px 0 0 44px;
+      overflow: hidden;
+      border-radius: 5px;
+      background: #181917;
+      box-shadow: 0 16px 30px rgba(0, 0, 0, 0.18);
+    }
+
+    .trace-lines {
+      padding: 13px 16px 8px;
+      color: #74726d;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .progress-line {
+      height: 3px;
+      background: linear-gradient(90deg, #85df86 0%, #62cfe3 42%, rgba(255,255,255,0.08) 42%);
+      transform: scaleX(0.42);
+      transform-origin: left center;
+    }
+
+    .remaining {
+      margin: 11px 0 0 44px;
+      color: #8b8984;
+      font-size: 15px;
+    }
+
+    .bottom-stack {
+      display: grid;
+      justify-items: center;
+      gap: 8px;
+      padding-top: 18px;
+    }
+
+    .notify-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 22px;
+      width: min(840px, 100%);
+      min-height: 80px;
+      border: 1px solid var(--line-strong);
+      border-radius: 24px;
+      background: var(--surface-raised);
+      box-shadow: var(--shadow);
+      padding: 14px 16px 14px 24px;
+    }
+
+    .notify-main {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      min-width: 0;
+    }
+
+    .notify-title {
+      color: #efeeeb;
+      font-size: 19px;
+      font-weight: 650;
+      letter-spacing: 0;
+    }
+
+    .notify-sub {
+      color: var(--muted);
+      font-size: 16px;
+    }
+
+    .notify-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 0 0 auto;
+    }
+
+    .soft-button,
+    .light-button {
+      min-height: 44px;
+      border-radius: var(--pill);
+      padding: 0 21px;
+      font-weight: 650;
+      transition: background 180ms ease, color 180ms ease;
+    }
+
+    .soft-button {
+      background: #333431;
+      color: #e2e1dd;
+    }
+
+    .light-button {
+      background: var(--white-button);
+      color: #1f201e;
+    }
+
+    .soft-button:hover,
+    .soft-button:focus-visible {
+      background: #292a27;
+      outline: none;
+    }
+
+    .light-button:hover,
+    .light-button:focus-visible {
+      background: white;
+      outline: none;
+    }
+
+    .composer {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      grid-template-rows: 1fr auto;
+      gap: 8px;
+      width: min(840px, 100%);
+      min-height: 124px;
+      border-radius: 24px;
+      background: var(--surface-raised);
+      box-shadow: var(--shadow);
+      padding: 24px;
+    }
+
+    .composer label {
+      grid-column: 1 / -1;
+    }
+
+    .composer textarea {
+      width: 100%;
+      min-height: 44px;
+      resize: none;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      color: #eeeeeb;
+      font-size: 18px;
+    }
+
+    .composer textarea::placeholder {
+      color: #8a8884;
+    }
+
+    .composer-plus {
+      display: inline-grid;
+      width: 42px;
+      height: 42px;
+      place-items: center;
+      border-radius: 50%;
+      background: transparent;
+      color: #efeeeb;
+    }
+
+    .send {
+      display: inline-grid;
+      width: 50px;
+      height: 50px;
+      place-items: center;
+      border-radius: 50%;
+      background: #a9aaa5;
+      color: #333431;
+      transition: background 180ms ease, color 180ms ease;
+    }
+
+    .send:hover,
+    .send:focus-visible {
+      background: var(--white-button);
+      color: #111;
+      outline: none;
+    }
+
+    .admin-drawer {
+      position: fixed;
+      right: 24px;
+      top: 84px;
+      z-index: 10;
+      display: none;
+      width: min(390px, calc(100vw - 48px));
+      border: 1px solid var(--line-strong);
+      border-radius: 26px;
+      background: rgba(28, 29, 27, 0.96);
+      box-shadow: var(--shadow);
+      padding: 22px;
+      backdrop-filter: blur(20px);
+    }
+
+    .admin-drawer.open {
+      display: block;
+    }
+
+    .admin-drawer h2 {
+      margin: 0 0 8px;
+      font-size: 20px;
+    }
+
+    .admin-drawer p {
+      margin: 0 0 18px;
+      color: var(--muted);
+    }
+
+    .admin-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .admin-list button {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      min-height: 48px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.06);
+      color: #e8e7e3;
+      padding: 0 14px;
+      text-align: left;
+    }
+
+    .admin-list button:hover,
+    .admin-list button:focus-visible {
+      background: rgba(255, 255, 255, 0.1);
+      outline: none;
+    }
+
+    :focus-visible {
+      outline: 2px solid rgba(132, 216, 227, 0.85);
+      outline-offset: 3px;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    @media (max-width: 980px) {
+      .progress,
+      .account {
+        display: none;
+      }
+
+      .onboarding {
+        padding: 24px 20px 48px;
+      }
+
+      .back {
+        top: 112px;
+        left: 20px;
+      }
+
+      .hero {
+        margin-top: 80px;
+      }
+
+      .agent-stage {
+        grid-template-columns: 48px minmax(0, 1fr) 48px;
+        margin-top: 72px;
+      }
+
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        position: relative;
+        display: block;
+        height: auto;
+      }
+
+      .sidebar-head,
+      .inbox-card,
+      .nav-area,
+      .profile {
+        display: none;
+      }
+
+      .new-task {
+        position: fixed;
+        right: 18px;
+        bottom: 18px;
+        z-index: 5;
+        margin: 0;
+        min-height: 56px;
+      }
+
+      .work-main {
+        padding: 18px 16px 96px;
+      }
+
+      .work-top {
+        align-items: flex-start;
+      }
+
+      .credit-pill {
+        min-height: 52px;
+      }
+    }
+
+    @media (max-height: 820px) and (min-width: 981px) {
+      .onboarding {
+        padding-bottom: 32px;
+      }
+
+      .hero {
+        margin-top: 42px;
+      }
+
+      .hero h1 {
+        font-size: clamp(44px, 4.4vw, 58px);
+      }
+
+      .hero p {
+        margin-top: 18px;
+        font-size: 18px;
+      }
+
+      .back {
+        top: 170px;
+      }
+
+      .agent-stage {
+        width: min(680px, 100%);
+        margin-top: 54px;
+      }
+
+      .orb {
+        width: calc(var(--size) * 0.82);
+        height: calc(var(--size) * 0.82);
+      }
+
+      .agent-copy {
+        margin-top: 24px;
+      }
+
+      .agent-name {
+        font-size: 32px;
+      }
+
+      .agent-role {
+        margin-top: 6px;
+        font-size: 18px;
+      }
+
+      .agent-line {
+        margin-top: 14px;
+        font-size: 17px;
+      }
+
+      .cta {
+        min-height: 62px;
+        margin-top: 24px;
+        font-size: 20px;
+      }
+    }
+
+    @media (max-height: 760px) and (min-width: 981px) {
+      .onboarding {
+        padding-top: 24px;
+      }
+
+      .progress {
+        top: 40px;
+      }
+
+      .hero {
+        margin-top: 28px;
+      }
+
+      .hero h1 {
+        font-size: clamp(40px, 4vw, 52px);
+      }
+
+      .hero p {
+        margin-top: 14px;
+      }
+
+      .back {
+        top: 152px;
+      }
+
+      .agent-stage {
+        margin-top: 36px;
+      }
+
+      .orb {
+        width: calc(var(--size) * 0.72);
+        height: calc(var(--size) * 0.72);
+      }
+
+      .agent-copy {
+        margin-top: 16px;
+      }
+
+      .agent-line {
+        margin-top: 10px;
+      }
+
+      .dots {
+        margin-top: 12px;
+      }
+
+      .cta {
+        min-height: 56px;
+        margin-top: 16px;
+      }
+
+      .secondary-link {
+        display: none;
+      }
+    }
+
+    @media (max-width: 720px) {
+      body {
+        font-size: 15px;
+      }
+
+      .brand-name {
+        font-size: 28px;
+      }
+
+      .back {
+        top: 96px;
+        width: 52px;
+        height: 52px;
+      }
+
+      .hero {
+        margin-top: 38px;
+      }
+
+      .hero h1 {
+        font-size: clamp(36px, 11vw, 48px);
+        line-height: 0.96;
+      }
+
+      .hero p {
+        margin-top: 18px;
+        font-size: 17px;
+      }
+
+      .agent-stage {
+        grid-template-columns: 1fr;
+        margin-top: 44px;
+      }
+
+      .agent-stage > .circle-button {
+        display: none;
+      }
+
+      .agent-orbs {
+        gap: 8px;
+      }
+
+      .orb {
+        width: calc(var(--size) * 0.58);
+        height: calc(var(--size) * 0.58);
+      }
+
+      .agent-copy {
+        margin-top: 18px;
+      }
+
+      .agent-name {
+        font-size: 28px;
+      }
+
+      .agent-role {
+        font-size: 17px;
+      }
+
+      .agent-line {
+        display: none;
+      }
+
+      .dots {
+        margin-top: 14px;
+      }
+
+      .cta {
+        min-height: 58px;
+        margin-top: 18px;
+        font-size: 18px;
+      }
+
+      .secondary-link {
+        display: none;
+      }
+
+      .top-actions {
+        gap: 10px;
+      }
+
+      .credit-pill {
+        display: none;
+      }
+
+      .task-title {
+        font-size: 18px;
+      }
+
+      .conversation {
+        padding-top: 28px;
+      }
+
+      .user-bubble,
+      .run-feed,
+      .notify-card,
+      .composer {
+        width: 100%;
+      }
+
+      .user-bubble {
+        font-size: 18px;
+      }
+
+      .run-line {
+        font-size: 16px;
+      }
+
+      .trace-card,
+      .remaining {
+        margin-left: 0;
+      }
+
+      .notify-card {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .notify-actions {
+        justify-content: flex-end;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main">跳到主内容</a>
+
+  <svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden">
+    <symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"></path></symbol>
+    <symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"></path></symbol>
+    <symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"></path></symbol>
+    <symbol id="i-edit" viewBox="0 0 24 24"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></symbol>
+    <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3 9.8 8.8 4 11l5.8 2.2L12 19l2.2-5.8L20 11l-5.8-2.2Z"></path><path d="M19 3v4"></path><path d="M21 5h-4"></path></symbol>
+    <symbol id="i-brain" viewBox="0 0 24 24"><path d="M9 5a3 3 0 0 0-5 2.2 3.2 3.2 0 0 0 1 2.3A3.4 3.4 0 0 0 4 12a3.4 3.4 0 0 0 1.1 2.5A3.3 3.3 0 0 0 8.3 19H9"></path><path d="M15 5a3 3 0 0 1 5 2.2 3.2 3.2 0 0 1-1 2.3 3.4 3.4 0 0 1 1 2.5 3.4 3.4 0 0 1-1.1 2.5A3.3 3.3 0 0 1 15.7 19H15"></path><path d="M9 5v14"></path><path d="M15 5v14"></path><path d="M9 9H7"></path><path d="M15 9h2"></path><path d="M9 14H7"></path><path d="M15 14h2"></path></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></symbol>
+    <symbol id="i-share" viewBox="0 0 24 24"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"></path><path d="m16 6-4-4-4 4"></path><path d="M12 2v14"></path></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14"></path><path d="M5 12h14"></path></symbol>
+    <symbol id="i-arrow-up" viewBox="0 0 24 24"><path d="M12 19V5"></path><path d="m5 12 7-7 7 7"></path></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></symbol>
+    <symbol id="i-console" viewBox="0 0 24 24"><path d="m4 17 6-6-6-6"></path><path d="M12 19h8"></path></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"></path><path d="M19 12a7 7 0 0 0-.1-1l2-1.6-2-3.5-2.4 1a7 7 0 0 0-1.8-1L14.4 3h-4l-.3 2.9a7 7 0 0 0-1.8 1l-2.4-1-2 3.5 2 1.6a7 7 0 0 0 0 2l-2 1.6 2 3.5 2.4-1a7 7 0 0 0 1.8 1l.3 2.9h4l.3-2.9a7 7 0 0 0 1.8-1l2.4 1 2-3.5-2-1.6c.1-.3.1-.6.1-1Z"></path></symbol>
+  </svg>
+
+  <div class="app">
+    <section class="view onboarding active" id="onboarding" aria-labelledby="hero-title">
+      <header class="top">
+        <div class="brand" aria-label="AstraOS">
+          <div class="brand-mark" aria-hidden="true"></div>
+          <div class="brand-name">astra</div>
+        </div>
+        <div class="progress" aria-label="onboarding progress">
+          <span></span>
+          <span></span>
+        </div>
+        <button class="account" type="button" aria-label="Account menu">
+          <span>leo@astraos.ai</span>
+          <svg class="icon"><use href="#i-chevron-down"></use></svg>
+        </button>
+      </header>
+
+      <button class="circle-button back" type="button" aria-label="Back">
+        <svg class="icon"><use href="#i-chevron-left"></use></svg>
+      </button>
+
+      <main class="hero" id="main" tabindex="-1">
+        <h1 id="hero-title">Which agent will run your day?</h1>
+        <p>Pick a preset. AstraOS opens the workspace with the right tools already wired.</p>
+
+        <div class="agent-stage" aria-label="Agent preset carousel">
+          <button class="circle-button" type="button" id="prevAgent" aria-label="Previous agent">
+            <svg class="icon"><use href="#i-chevron-left"></use></svg>
+          </button>
+
+          <div class="agent-orbs" aria-hidden="true">
+            <div class="orb" id="orb0" style="--size:132px"></div>
+            <div class="orb active" id="orb1" style="--size:176px"></div>
+            <div class="orb" id="orb2" style="--size:132px"></div>
+          </div>
+
+          <button class="circle-button" type="button" id="nextAgent" aria-label="Next agent">
+            <svg class="icon"><use href="#i-chevron-right"></use></svg>
+          </button>
+        </div>
+
+        <div class="agent-copy" aria-live="polite">
+          <h2 class="agent-name"><span id="agentName">Kara Lane</span><svg class="icon"><use href="#i-edit"></use></svg></h2>
+          <div class="agent-role" id="agentRole">Customer success operator</div>
+          <p class="agent-line" id="agentLine">I will qualify inbound issues, search your playbooks, open tickets, and keep customers posted.</p>
+          <div class="dots" id="dots" aria-label="Agent presets"></div>
+          <button class="cta" type="button" id="startWorkspace">Go with Kara Lane</button>
+          <button class="secondary-link" type="button" id="openAdminFromOnboarding">Open Admin Console instead</button>
+        </div>
+      </main>
+    </section>
+
+    <section class="view" id="workspace" aria-labelledby="workspace-title">
+      <div class="workspace">
+        <aside class="sidebar" aria-label="Workspace navigation">
+          <div class="sidebar-head">
+            <div class="brand" aria-label="AstraOS">
+              <div class="brand-mark" aria-hidden="true"></div>
+              <div class="brand-name">astra</div>
+            </div>
+          </div>
+
+          <button class="inbox-card" type="button">
+            <span class="inbox-name red-dot">
+              <svg class="icon"><use href="#i-spark"></use></svg>
+              <strong id="sidebarAgent">Kara Lane</strong>
+              <span>from Astra</span>
+            </span>
+            <svg class="icon"><use href="#i-chevron-right"></use></svg>
+          </button>
+
+          <div class="nav-area">
+            <p class="section-label">Scheduled Tasks <svg class="icon"><use href="#i-chevron-right"></use></svg></p>
+            <p class="section-label">Recent Tasks <svg class="icon"><use href="#i-search"></use></svg></p>
+            <button class="task-item" type="button">
+              <svg class="icon"><use href="#i-brain"></use></svg>
+              Enterprise Lead Qualification
+            </button>
+          </div>
+
+          <button class="new-task" type="button">
+            New Task
+            <svg class="icon"><use href="#i-plus"></use></svg>
+          </button>
+
+          <div class="profile">
+            <div class="profile-main">
+              <span class="avatar">L</span>
+              <span>Leo</span>
+              <span class="plan">Team</span>
+            </div>
+            <svg class="icon"><use href="#i-chevron-down"></use></svg>
+          </div>
+        </aside>
+
+        <main class="work-main">
+          <header class="work-top">
+            <button class="task-title" type="button" id="workspace-title">
+              <svg class="icon"><use href="#i-brain"></use></svg>
+              Enterprise Lead Qualification
+              <svg class="icon"><use href="#i-chevron-down"></use></svg>
+            </button>
+
+            <div class="top-actions">
+              <button type="button" aria-label="Share task">
+                <svg class="icon"><use href="#i-share"></use></svg>
+              </button>
+              <button class="credit-pill" type="button" aria-label="Credits and upgrade">
+                <svg class="icon"><use href="#i-clock"></use></svg>
+                43
+                <span class="upgrade">Upgrade</span>
+              </button>
+              <button type="button" id="adminToggle" aria-label="Admin Console">
+                <svg class="icon"><use href="#i-console"></use></svg>
+              </button>
+            </div>
+          </header>
+
+          <section class="conversation" aria-label="Task progress">
+            <div class="time">21:31</div>
+            <div class="user-bubble">How would AstraOS qualify the new enterprise lead and prepare a sales follow-up before tomorrow morning?</div>
+
+            <div class="run-feed">
+              <div class="run-line">
+                <svg class="icon"><use href="#i-spark"></use></svg>
+                <span>I found relevant CRM context and the latest account notes for the next step.</span>
+                <svg class="icon"><use href="#i-chevron-down"></use></svg>
+              </div>
+              <div class="run-line">
+                <span class="spinner" aria-hidden="true"></span>
+                <span>"AstraOS enterprise lead score" AND "ACME renewal expansion" capabilities...</span>
+                <svg class="icon"><use href="#i-chevron-down"></use></svg>
+              </div>
+              <div class="trace-card">
+                <div class="trace-lines">
+                  Exploring stakeholder map.<br />
+                  Planning complete.<br />
+                  Search CRM, support history, and renewal risk signals for ACME account.
+                </div>
+                <div class="progress-line"></div>
+              </div>
+              <div class="remaining">About 30 seconds remaining...</div>
+            </div>
+          </section>
+
+          <section class="bottom-stack" aria-label="Task composer">
+            <div class="notify-card">
+              <div class="notify-main">
+                <svg class="icon" style="width:30px;height:30px"><use href="#i-clock"></use></svg>
+                <div>
+                  <div class="notify-title">Go do something else - Astra's got this</div>
+                  <div class="notify-sub">We will ping you the moment the agent finishes.</div>
+                </div>
+              </div>
+              <div class="notify-actions">
+                <button class="soft-button" type="button">No thanks</button>
+                <button class="light-button" type="button">Notify Me</button>
+              </div>
+            </div>
+
+            <form class="composer">
+              <label>
+                <span style="position:absolute;clip:rect(0 0 0 0)">Describe your task</span>
+                <textarea placeholder="Describe your task to get started..."></textarea>
+              </label>
+              <button class="composer-plus" type="button" aria-label="Add attachment">
+                <svg class="icon" style="width:28px;height:28px"><use href="#i-plus"></use></svg>
+              </button>
+              <button class="send" type="submit" aria-label="Send task">
+                <svg class="icon"><use href="#i-arrow-up"></use></svg>
+              </button>
+            </form>
+          </section>
+        </main>
+      </div>
+    </section>
+
+    <aside class="admin-drawer" id="adminDrawer" aria-label="Admin Console">
+      <h2>Admin Console</h2>
+      <p>Configuration stays available for owners, but it no longer interrupts the default agent workflow.</p>
+      <div class="admin-list">
+        <button type="button"><span>Team permissions</span><svg class="icon"><use href="#i-chevron-right"></use></svg></button>
+        <button type="button"><span>Model and tool policy</span><svg class="icon"><use href="#i-chevron-right"></use></svg></button>
+        <button type="button"><span>Knowledge sources</span><svg class="icon"><use href="#i-chevron-right"></use></svg></button>
+        <button type="button"><span>Usage and audit logs</span><svg class="icon"><use href="#i-chevron-right"></use></svg></button>
+      </div>
+    </aside>
+  </div>
+
+  <script src="vendor/multiavatar.min.js"></script>
+  <script src="vendor/anime.min.js"></script>
+  <script>
+    if ("scrollRestoration" in history) {
+      history.scrollRestoration = "manual";
+    }
+
+    window.addEventListener("load", () => {
+      window.scrollTo(0, 0);
+    });
+
+    const agents = [
+      {
+        name: "Mira Chen",
+        role: "Market research analyst",
+        line: "I will scan competitors, summarize market shifts, and prepare the executive brief.",
+        avatar: {
+          skin: "#e5c3a7",
+          hair: "#394944",
+          shirt: "#8d999b",
+          glow: "#526d61",
+          tilt: "-4deg"
+        }
+      },
+      {
+        name: "Kara Lane",
+        role: "Customer success operator",
+        line: "I will qualify inbound issues, search your playbooks, open tickets, and keep customers posted.",
+        avatar: {
+          skin: "#f0c8ae",
+          hair: "#4d5b48",
+          shirt: "#70d88e",
+          glow: "#3d9456",
+          tilt: "3deg"
+        }
+      },
+      {
+        name: "Nolan Reed",
+        role: "Revenue operations agent",
+        line: "I will enrich leads, draft follow-ups, and route qualified accounts to the right owner.",
+        avatar: {
+          skin: "#d7b190",
+          hair: "#4f4733",
+          shirt: "#9f9a68",
+          glow: "#566b3f",
+          tilt: "5deg"
+        }
+      },
+      {
+        name: "Iris Vale",
+        role: "Finance controls assistant",
+        line: "I will review spend anomalies, gather approvals, and prepare an audit-ready note.",
+        avatar: {
+          skin: "#e7bda9",
+          hair: "#33384d",
+          shirt: "#7d91d6",
+          glow: "#46527f",
+          tilt: "-5deg"
+        }
+      },
+      {
+        name: "Owen Park",
+        role: "Operations coordinator",
+        line: "I will watch blockers across vendors, calendars, and tasks so the team can keep moving.",
+        avatar: {
+          skin: "#deb996",
+          hair: "#46382f",
+          shirt: "#b8a064",
+          glow: "#75653f",
+          tilt: "2deg"
+        }
+      }
+    ];
+
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const animeRuntime = typeof anime === "function" ? anime : null;
+    const avatarRuntime = typeof multiavatar === "function" ? multiavatar : null;
+    const canAnimate = Boolean(animeRuntime) && !reduceMotion;
+    const state = { active: 1, adminOpen: false };
+    const nameEl = document.getElementById("agentName");
+    const roleEl = document.getElementById("agentRole");
+    const lineEl = document.getElementById("agentLine");
+    const ctaEl = document.getElementById("startWorkspace");
+    const dotsEl = document.getElementById("dots");
+    const sidebarAgent = document.getElementById("sidebarAgent");
+    const orbs = [document.getElementById("orb0"), document.getElementById("orb1"), document.getElementById("orb2")];
+    const onboarding = document.getElementById("onboarding");
+    const workspace = document.getElementById("workspace");
+    const adminDrawer = document.getElementById("adminDrawer");
+
+    function agentAt(offset) {
+      return agents[(state.active + offset + agents.length) % agents.length];
+    }
+
+    function avatarMarkup(agent) {
+      const svg = avatarRuntime
+        ? avatarRuntime(`${agent.name} ${agent.role} AstraOS`, true)
+        : `<svg viewBox="0 0 160 160"><circle cx="80" cy="80" r="46" fill="${agent.avatar.shirt}"></circle></svg>`;
+      return `
+        <div class="avatar-scene" aria-hidden="true">
+          <span class="avatar-art">${svg}</span>
+          <span class="avatar-glint"></span>
+        </div>
+      `;
+    }
+
+    function paintAvatar(container, agent) {
+      container.style.setProperty("--skin", agent.avatar.skin);
+      container.style.setProperty("--hair", agent.avatar.hair);
+      container.style.setProperty("--shirt", agent.avatar.shirt);
+      container.style.setProperty("--glow", agent.avatar.glow);
+      container.style.setProperty("--tilt", agent.avatar.tilt);
+      container.innerHTML = avatarMarkup(agent);
+    }
+
+    function blinkActiveAvatar(delay = 120) {
+      if (!canAnimate) return;
+      anime({
+        targets: ".orb.active .avatar-scene",
+        scale: [
+          { value: 1.035, duration: 120 },
+          { value: 1, duration: 160 }
+        ],
+        filter: [
+          { value: "brightness(1.08)", duration: 120 },
+          { value: "brightness(1)", duration: 160 }
+        ],
+        easing: "easeOutCubic",
+        delay
+      });
+    }
+
+    function animateIntro() {
+      if (!canAnimate) return;
+
+      anime.set([".brand", ".progress span", ".hero h1", ".hero p", ".agent-stage", ".agent-copy"], {
+        opacity: 0,
+        translateY: 14
+      });
+      anime.set(".orb", { opacity: 0, scale: 0.92, translateY: 18 });
+
+      anime.timeline({ easing: "easeOutCubic" })
+        .add({
+          targets: ".brand",
+          opacity: [0, 1],
+          translateY: [10, 0],
+          duration: 440
+        })
+        .add({
+          targets: ".progress span",
+          opacity: [0, 1],
+          scaleX: [0.72, 1],
+          duration: 420,
+          delay: anime.stagger(80)
+        }, "-=260")
+        .add({
+          targets: [".hero h1", ".hero p"],
+          opacity: [0, 1],
+          translateY: [18, 0],
+          duration: 620,
+          delay: anime.stagger(90)
+        }, "-=180")
+        .add({
+          targets: ".agent-stage",
+          opacity: [0, 1],
+          translateY: [16, 0],
+          duration: 420
+        }, "-=260")
+        .add({
+          targets: ".orb",
+          opacity: [0, 0.72],
+          scale: [0.9, 1],
+          translateY: [20, 0],
+          duration: 560,
+          delay: anime.stagger(70, { from: "center" })
+        }, "-=260")
+        .add({
+          targets: ".orb.active",
+          opacity: [0.72, 1],
+          translateY: [0, -8],
+          duration: 220
+        }, "-=360")
+        .add({
+          targets: ".agent-copy",
+          opacity: [0, 1],
+          translateY: [14, 0],
+          duration: 420
+        }, "-=180")
+        .finished.then(() => blinkActiveAvatar(60));
+    }
+
+    function animateAgentSwap() {
+      if (!canAnimate) return;
+
+      anime.remove([".agent-copy", ".orb", ".dot"]);
+      anime({
+        targets: ".agent-copy",
+        opacity: [0, 1],
+        translateY: [10, 0],
+        duration: 260,
+        easing: "easeOutCubic"
+      });
+      anime({
+        targets: ".orb:not(.active)",
+        scale: [0.96, 1],
+        translateY: [8, 6],
+        opacity: [0.5, 0.72],
+        duration: 280,
+        easing: "easeOutCubic",
+        delay: anime.stagger(35)
+      });
+      anime({
+        targets: ".orb.active",
+        scale: [0.94, 1],
+        translateY: [-2, -8],
+        opacity: [0.78, 1],
+        duration: 320,
+        easing: "easeOutCubic"
+      });
+      anime({
+        targets: ".orb.active .avatar-scene",
+        rotate: [-2, 0],
+        translateY: [4, 0],
+        duration: 300,
+        easing: "easeOutBack"
+      });
+      anime({
+        targets: ".dot",
+        scale: [0.82, 1],
+        opacity: [0.5, 1],
+        duration: 220,
+        easing: "easeOutCubic",
+        delay: anime.stagger(22)
+      });
+      blinkActiveAvatar(190);
+    }
+
+    function renderAgents(animate = false) {
+      const current = agentAt(0);
+      nameEl.textContent = current.name;
+      roleEl.textContent = current.role;
+      lineEl.textContent = current.line;
+      ctaEl.textContent = `Go with ${current.name}`;
+      sidebarAgent.textContent = current.name;
+
+      [-1, 0, 1].forEach((offset, index) => {
+        const agent = agentAt(offset);
+        paintAvatar(orbs[index], agent);
+        orbs[index].classList.toggle("active", offset === 0);
+      });
+
+      dotsEl.innerHTML = "";
+      agents.forEach((agent, index) => {
+        const dot = document.createElement("button");
+        dot.type = "button";
+        dot.className = `dot${index === state.active ? " active" : ""}`;
+        dot.setAttribute("aria-label", `Choose ${agent.name}`);
+        dot.addEventListener("click", () => {
+          state.active = index;
+          renderAgents(true);
+        });
+        dotsEl.appendChild(dot);
+      });
+
+      if (animate) {
+        animateAgentSwap();
+      }
+    }
+
+    function stepAgent(direction) {
+      state.active = (state.active + direction + agents.length) % agents.length;
+      renderAgents(true);
+    }
+
+    function enterWorkspace() {
+      const showWorkspace = () => {
+        onboarding.classList.remove("active");
+        workspace.classList.add("active");
+        adminDrawer.classList.remove("open");
+        state.adminOpen = false;
+        window.scrollTo(0, 0);
+
+        if (!canAnimate) return;
+        anime.set([".sidebar", ".work-top", ".conversation > *", ".notify-card", ".composer"], {
+          opacity: 0,
+          translateY: 14
+        });
+        anime.set(".progress-line", { scaleX: 0 });
+        anime.timeline({ easing: "easeOutCubic" })
+          .add({
+            targets: ".sidebar",
+            opacity: [0, 1],
+            translateX: [-18, 0],
+            translateY: 0,
+            duration: 420
+          })
+          .add({
+            targets: ".work-top",
+            opacity: [0, 1],
+            translateY: [12, 0],
+            duration: 360
+          }, "-=260")
+          .add({
+            targets: ".conversation > *",
+            opacity: [0, 1],
+            translateY: [14, 0],
+            duration: 360,
+            delay: anime.stagger(70)
+          }, "-=160")
+          .add({
+            targets: ".progress-line",
+            scaleX: [0, 0.42],
+            duration: 520,
+            easing: "easeOutExpo"
+          }, "-=220")
+          .add({
+            targets: [".notify-card", ".composer"],
+            opacity: [0, 1],
+            translateY: [18, 0],
+            duration: 380,
+            delay: anime.stagger(70)
+          }, "-=160");
+      };
+
+      if (!canAnimate) {
+        showWorkspace();
+        return;
+      }
+
+      anime({
+        targets: "#onboarding",
+        opacity: [1, 0],
+        translateY: [0, -10],
+        duration: 240,
+        easing: "easeInCubic",
+        complete: () => {
+          onboarding.style.opacity = "";
+          onboarding.style.transform = "";
+          showWorkspace();
+        }
+      });
+    }
+
+    function setAdminDrawer(open) {
+      state.adminOpen = open;
+      if (open) {
+        adminDrawer.classList.add("open");
+        if (canAnimate) {
+          anime.remove(adminDrawer);
+          anime({
+            targets: adminDrawer,
+            opacity: [0, 1],
+            translateY: [-8, 0],
+            scale: [0.98, 1],
+            duration: 220,
+            easing: "easeOutCubic"
+          });
+        }
+        return;
+      }
+
+      if (!canAnimate) {
+        adminDrawer.classList.remove("open");
+        return;
+      }
+
+      anime.remove(adminDrawer);
+      anime({
+        targets: adminDrawer,
+        opacity: [1, 0],
+        translateY: [0, -8],
+        scale: [1, 0.98],
+        duration: 180,
+        easing: "easeInCubic",
+        complete: () => {
+          adminDrawer.classList.remove("open");
+          adminDrawer.style.opacity = "";
+          adminDrawer.style.transform = "";
+        }
+      });
+    }
+
+    document.getElementById("prevAgent").addEventListener("click", () => stepAgent(-1));
+    document.getElementById("nextAgent").addEventListener("click", () => stepAgent(1));
+
+    ctaEl.addEventListener("click", enterWorkspace);
+
+    document.getElementById("adminToggle").addEventListener("click", () => {
+      setAdminDrawer(!state.adminOpen);
+    });
+
+    document.getElementById("openAdminFromOnboarding").addEventListener("click", () => {
+      setAdminDrawer(true);
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (!onboarding.classList.contains("active")) return;
+      if (event.key === "ArrowLeft") stepAgent(-1);
+      if (event.key === "ArrowRight") stepAgent(1);
+    });
+
+    document.querySelector(".composer").addEventListener("submit", (event) => {
+      event.preventDefault();
+    });
+
+    renderAgents();
+    animateIntro();
+  </script>
+</body>
+</html>
