@@ -20,7 +20,7 @@ AstraOS 的目标是完成 Task，而不是展示 Agent。
 
 ```mermaid
 flowchart TD
-  FE[Frontend<br/>Workspace] --> API[API Layer<br/>JWT / Auth / REST / WS]
+  FE[Frontend<br/>Workspace] --> API[API Layer<br/>JWT / Auth / REST / WS / Organization / Marketplace API]
   API --> ACCT[Account Service<br/>SMTP / Email]
   API --> RT[AI Runtime]
   ACCT --> FD[Foundation Layer]
@@ -33,7 +33,7 @@ flowchart TD
 ```text
 Frontend（Workspace）
 
-API Layer（JWT / Auth / REST / WS）
+API Layer（JWT / Auth / REST / WS / Organization / Marketplace API）
 
 AI Runtime
 
@@ -46,22 +46,25 @@ Account Service 是 API Layer 下的业务服务，负责账号、身份、邮�
 
 ```text
 AI Runtime
-  ├── Task Intake
-  ├── Decision Engine
-  ├── Planning（Optional）
-  ├── Execution
-  ├── Workflow（Optional Executor）
-  ├── Tool
-  ├── Context
-  ├── Memory
-  ├── Scheduler
-  ├── Permission
-  ├── Approval
-  ├── Audit
-  └── Result Delivery
+  ├── Main Flow
+  │   ├── Task Intake
+  │   ├── Decision Engine
+  │   ├── Planning（Optional）
+  │   ├── Execution
+  │   └── TaskResult
+  └── Supporting Capabilities
+      ├── Context
+      ├── Permission
+      ├── Approval
+      ├── Tool
+      ├── Memory
+      ├── Scheduler
+      └── Audit
 ```
 
 Runtime 是 AstraOS 的核心执行平面。它负责把用户委托的 Task 可靠、可控、可恢复、可审计地完成。
+
+Execution 负责选择和运行 executor。Tool 是 executor 调用的受控能力，不是与 Execution 平级的执行流程。
 
 ## 4. Task 路径
 
@@ -71,7 +74,7 @@ User
   -> Decision Engine
   -> Runtime Invocation
   -> Execution
-  -> Result Delivery
+  -> TaskResult
 ```
 
 当任务需要多步骤流程时，Execution 可以调用 Workflow executor：
@@ -80,9 +83,10 @@ User
 Task
   -> Decision
   -> Runtime
-  -> Workflow（Optional）
-  -> Tool（Optional）
-  -> Result Delivery
+  -> Execution
+  -> WorkflowExecutor（Optional）
+  -> Tool（Called by Executor）
+  -> TaskResult
 ```
 
 Workflow 是执行方式之一，不是所有任务的必经路径。
@@ -106,16 +110,28 @@ AI Employee 是 Agent 能力在 Workspace 中的产品化形态。
 | Task Intake | 接收用户委托，创建 TaskRequest |
 | Decision Engine | 判断直接回答、追问、工具动作、Workflow、权限和结果标准 |
 | Planning（Optional） | 为多步骤或高风险任务生成用户可理解计划 |
-| Execution | 执行 direct answer、clarification、tool action 或 workflow |
+| Execution | 选择并运行 direct answer、clarification、tool action 或 workflow executor |
 | Workflow（Optional Executor） | 执行需要多步骤编排的任务 |
-| Tool | 受控读取、写入或外部动作 |
+| Tool | Executor 调用的受控读取、写入或外部动作 |
 | Context | 按需装配 Workspace、附件、历史任务和业务对象 |
 | Memory | 管理可复用上下文、偏好和长期记忆 |
 | Scheduler | 管理异步任务、延迟任务、重试和恢复事件 |
 | Permission | 约束本次 Task 可以读写什么 |
 | Approval | 在高风险或不可逆动作前暂停并等待确认 |
 | Audit | 记录决策、执行、暂停、恢复和副作用 |
-| Result Delivery | 交付业务结果、失败原因和下一步建议 |
+| TaskResult | 记录并交付业务结果、失败原因和下一步建议 |
+
+Execution executor：
+
+```text
+Execution
+  ├── DirectAnswerExecutor
+  ├── ClarificationExecutor
+  ├── ToolActionExecutor
+  └── WorkflowExecutor（Optional）
+```
+
+Executor 可以调用 Tool。ToolDefinition 负责声明输入输出、权限、审批、幂等和副作用等级。
 
 ## 7. Foundation
 
@@ -153,10 +169,20 @@ Marketplace
 
 - Account：用户、邮箱验证、JWT、身份状态。
 - Workspace：用户工作空间和项目容器。
-- Employee：运行在 Runtime 上的业务应用配置。
+- Employee：安装到 Workspace 后进入 Employee Registry 的业务应用配置。
 - Task：用户委托、决策、权限、审批、结果。
 - Runtime：执行、暂停、恢复、工具调用、审计。
-- Marketplace：未来安装和分发 AI Employee。
+- Marketplace：分发 Employee Package，并将其安装到 Workspace。
+
+Marketplace 与 Employee Registry 的关系：
+
+```text
+Marketplace
+  -> Employee Package
+  -> Install to Workspace
+  -> Employee Registry
+  -> Runtime
+```
 
 ## 9. 实现原则
 
@@ -164,8 +190,8 @@ Marketplace
 - Decision Engine 输出结构化决策。
 - Runtime 只执行结构化 RuntimeInvocation。
 - Permission、Approval、Audit 是 Runtime 默认能力。
-- Tool 负责受控副作用。
-- Result Delivery 是产品验收对象。
+- Executor 负责执行流程，Tool 是 executor 调用的受控资源。
+- TaskResult 是产品验收对象。
 - Workflow 只在需要多步骤编排时出现。
 
 ## 10. MVP 实现顺序

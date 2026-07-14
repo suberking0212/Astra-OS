@@ -43,7 +43,7 @@ Context、Permission、Approval、Audit、Memory 都属于 Runtime 内部能力�
 ## 3. 正确任务路径
 
 ```text
-User -> Delegate Task -> Decision Engine -> Runtime -> Result Delivery
+User -> Delegate Task -> Decision Engine -> Runtime -> TaskResult
 ```
 
 更完整的工程链路：
@@ -52,9 +52,10 @@ User -> Delegate Task -> Decision Engine -> Runtime -> Result Delivery
 Task
   -> Decision
   -> Runtime
-  -> Workflow（可选）
-  -> Tool（可选）
-  -> Result Delivery
+  -> Execution
+  -> WorkflowExecutor（可选）
+  -> Tool（由 Executor 调用）
+  -> TaskResult
 ```
 
 Workflow 不是所有 Task 的中心。很多 Task 可以直接回答、追问用户，或执行单个工具，不需要完整 Workflow。
@@ -81,17 +82,20 @@ Runtime 是 AstraOS 的核心执行平面：
 
 ```text
 AI Runtime
-  ├── Task Intake
-  ├── Decision Engine
-  ├── Planning（可选）
-  ├── Execution
-  ├── Context
-  ├── Permission
-  ├── Approval
-  ├── Tool
-  ├── Memory
-  ├── Audit
-  └── Result Delivery
+  ├── Main Flow
+  │   ├── Task Intake
+  │   ├── Decision Engine
+  │   ├── Planning（可选）
+  │   ├── Execution
+  │   └── TaskResult
+  └── Supporting Capabilities
+      ├── Context
+      ├── Permission
+      ├── Approval
+      ├── Tool
+      ├── Memory
+      ├── Scheduler
+      └── Audit
 ```
 
 模块定位：
@@ -101,14 +105,14 @@ AI Runtime
 | Task Intake | 接收用户委托，创建 TaskRequest | 不选择 Workflow |
 | Decision Engine | 判断直接回答、追问、执行路径、权限、结果标准 | 不直接写表或调用工具 |
 | Planning（可选） | 给用户展示可理解计划 | 不是所有任务必经层 |
-| Execution | 执行 direct answer、tool action 或 workflow | 不绕过权限和审批 |
+| Execution | 选择并运行 direct answer、clarification、tool action 或 workflow executor | 不绕过权限和审批 |
 | Context | 按需装配 Workspace、附件、历史、记忆 | 不无脑塞全部上下文 |
 | Permission | 约束本次 Task 可以读写什么 | 不是独立外部服务 |
 | Approval | 高风险写入前暂停并等待用户确认 | 不提前写入业务表 |
-| Tool | 受控读取、写入或外部动作 | 不是 Agent |
+| Tool | Executor 调用的受控读取、写入或外部动作 | 不是执行流程 |
 | Memory | 管理可复用上下文和偏好 | 不是决策本身 |
 | Audit | 记录为什么这么做、做了什么、如何恢复 | 不是用户主界面 |
-| Result Delivery | 交付业务结果、失败原因和下一步 | 不等同于 Run 成功 |
+| TaskResult | 交付业务结果、失败原因和下一步 | 不等同于 Run 成功 |
 
 ## 6. Decision Engine
 
@@ -263,7 +267,17 @@ Marketplace
 - Employee：运行在 Runtime 上的业务应用配置。
 - Task：用户委托、决策、权限、结果。
 - Runtime：执行、暂停、恢复、审计。
-- Marketplace：未来安装和分发 AI Employee。
+- Marketplace：分发 Employee Package，并将其安装到 Workspace。
+
+Marketplace 与 Employee Registry 的关系：
+
+```text
+Marketplace
+  -> Employee Package
+  -> Install to Workspace
+  -> Employee Registry
+  -> Runtime
+```
 
 ## 11. Foundation
 

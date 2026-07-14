@@ -36,17 +36,20 @@ Runtime 内部结构：
 
 ```text
 AI Runtime
-  ├── Task Intake
-  ├── Decision Engine
-  ├── Planning（可选）
-  ├── Execution
-  ├── Context
-  ├── Permission
-  ├── Approval
-  ├── Tool
-  ├── Memory
-  ├── Audit
-  └── Result Delivery
+  ├── Main Flow
+  │   ├── Task Intake
+  │   ├── Decision Engine
+  │   ├── Planning（可选）
+  │   ├── Execution
+  │   └── TaskResult
+  └── Supporting Capabilities
+      ├── Context
+      ├── Permission
+      ├── Approval
+      ├── Tool
+      ├── Memory
+      ├── Scheduler
+      └── Audit
 ```
 
 禁止将 Context、Permission、Approval、Audit 拆成 MVP 独立层或独立服务。它们是 Runtime 的默认能力。
@@ -65,7 +68,7 @@ Runtime 必须支持：
   -> 收到事件后恢复
   -> 防止重复副作用
   -> 失败可追踪、可重试、可解释
-  -> 交付 Result Delivery 和 Audit
+  -> 交付 TaskResult 和 Audit
 ```
 
 平台目标：
@@ -89,7 +92,7 @@ TaskRequest
   -> RuntimeInvocation
   -> RuntimeExecution
   -> ToolCall / WorkflowRun（可选）
-  -> ResultDelivery
+  -> TaskResult
 ```
 
 禁止链路：
@@ -110,7 +113,7 @@ Task
 | Planning（可选） | 生成用户可理解、Runtime 可映射的计划 | 把内部 StepRun 原样暴露给用户 |
 | Runtime | 执行、暂停、恢复、重试、超时、审计 | 依赖自由文本 prompt 判断下一步 |
 | Tool | 受控读取、写入和外部动作 | 绕过权限、审批、幂等 |
-| Result Delivery | 判断 Task 是否真正完成并交付结果 | 用 Run 成功代替 Task 成功 |
+| TaskResult | 判断 Task 是否真正完成并交付结果 | 用 Run 成功代替 Task 成功 |
 
 耦合原则：
 
@@ -219,7 +222,7 @@ cancelled
 - 用 `skipped` 步骤代替 Runtime 等待态。
 - 在等待用户审批时提前写入业务表。
 
-## 8. Execution 与 Workflow
+## 8. Execution、Executor 与 Tool
 
 Execution 是 Runtime 的执行模块。它可以选择不同 executor：
 
@@ -231,14 +234,24 @@ Execution
   └── WorkflowExecutor（可选）
 ```
 
-WorkflowExecutor 只在任务确实需要多步骤流程时使用。
+Executor 负责执行流程。Tool 是 executor 调用的受控资源，不是与 Execution 平级的流程。
+
+调用关系：
+
+```text
+Execution
+  -> Executor
+  -> ToolDefinition / Domain Service / Foundation
+```
+
+WorkflowExecutor 只在任务确实需要多步骤流程时使用。ToolActionExecutor 可以执行单个受控 Tool。
 
 Workflow Definition 要求：
 
 - Step 必须是可执行定义，不只是展示步骤。
 - Step 必须声明 executor、输入映射、权限、审批、幂等和失败策略。
 - Workflow 不能绕过 ToolDefinition。
-- Workflow 成功不等于 Task 成功，最终以 Result Delivery 为准。
+- Workflow 成功不等于 Task 成功，最终以 TaskResult 为准。
 
 Step 状态：
 
@@ -327,9 +340,9 @@ Audit 要求：
 - 记录 Tool 输入输出的脱敏快照。
 - 记录副作用是否已经提交。
 
-## 11. Result Delivery
+## 11. TaskResult
 
-Result Delivery 是产品验收对象，不是内部 Run Trace。
+TaskResult 是产品验收对象，不是内部 Run Trace。
 
 ```ts
 type TaskResult = {
@@ -349,7 +362,7 @@ type TaskResult = {
 要求：
 
 - Runtime `succeeded` 不自动等于 TaskResult `succeeded`。
-- Workspace 展示 Result Delivery，而不是展示 Run Trace。
+- Workspace 展示 TaskResult / Result，而不是展示 Run Trace。
 - 失败结果必须说明原因和下一步建议。
 
 ## 12. Foundation 依赖

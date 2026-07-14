@@ -59,7 +59,7 @@ flowchart TD
   D --> P[Plan<br/>Optional]
   D --> C[Context Request]
   D --> A[Approval Request]
-  D --> R[Result Delivery]
+  D --> R[TaskResult]
 ```
 
 展示原则：
@@ -97,7 +97,7 @@ View Result
 
 ## 7. 结果展示
 
-Workspace 展示 `Result Delivery`：
+Workspace 展示 `TaskResult` / Result：
 
 - 结果摘要。
 - 创建或更新的业务对象。

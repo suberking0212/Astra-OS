@@ -16,7 +16,7 @@ AI Employee is a business application running on the Runtime. Agent is the decis
 
 ```text
 Frontend（Workspace）
-  -> API Layer（JWT / Auth / REST / WS）
+  -> API Layer（JWT / Auth / REST / WS / Organization / Marketplace API）
   -> AI Runtime
   -> Foundation Layer（LLM / Browser / MCP / Database / Redis / Storage）
 ```
