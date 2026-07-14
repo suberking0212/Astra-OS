@@ -24,14 +24,12 @@ Workspace 的目标是让用户委托任务、确认权限、补充上下文、�
 - 任务输入区、等待态、按钮映射区、结果区的布局位置。
 - 用户可理解的任务状态、权限说明、审批卡片和结果交付区域。
 
-## 3. 删除
+## 3. 边界
 
-- Employee-first 主路径。
-- Test Chat 主路径。
-- Admin Console 作为用户完成任务的必要路径。
-- Run / Step / ToolCall / Usage 等内部对象在普通用户界面的主展示。
-- 固定客服、采购、知识库等旧 demo 业务流的视觉承诺。
-- Pick Workflow / Inspect Run / Debug ToolCall 等内部操作入口。
+- Workspace 是用户完成任务的第一入口。
+- Admin / Console 只用于治理、观测、审计和调试。
+- Runtime Trace 不作为普通用户主界面。
+- 固定 demo 业务流不能成为 Workspace 的长期视觉承诺。
 
 ## 4. 当前前端状态
 
@@ -73,22 +71,13 @@ flowchart TD
 
 ## 6. 文案基线
 
-推荐用户动作：
+用户动作：
 
 ```text
 Delegate Task
 Approve Action
 Provide Context
 View Result
-```
-
-避免用户动作：
-
-```text
-Submit Task
-Pick Workflow
-Inspect Run
-Debug ToolCall
 ```
 
 状态文案应面向业务结果：

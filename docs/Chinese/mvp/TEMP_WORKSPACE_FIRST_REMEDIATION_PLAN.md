@@ -1,8 +1,8 @@
-# AstraOS Task-first 架构基线
+# AstraOS Task-first 工程实现计划
 
 更新时间：2026-07-14
 
-本文档定义 AstraOS MVP 后续开发的产品和工程口径。它优先写给未来维护项目的人和 Codex，而不是写给架构评审。
+本文档定义 AstraOS MVP 后续开发的工程实现计划。主架构以 `ARCHITECTURE_BASELINE.md` 为准。
 
 ## 1. 项目定位
 
@@ -20,7 +20,7 @@ AstraOS 的目标是完成 Task，而不是展示 Agent。
 
 ## 2. 总体层级
 
-第一页永远只使用四层架构：
+系统主层级：
 
 ```mermaid
 flowchart TD
@@ -38,17 +38,9 @@ Frontend（Workspace）
   -> Foundation（LLM / Browser / MCP / Database / Redis / Storage）
 ```
 
-禁止把第一页拆成九层。Context、Permission、Approval、Audit、Memory 都属于 Runtime 内部能力，不是独立系统层。
+Context、Permission、Approval、Audit、Memory 都属于 Runtime 内部能力。
 
 ## 3. 正确任务路径
-
-错误方向：
-
-```text
-User -> pick Agent -> pick Workflow -> run Tool -> inspect Run
-```
-
-正确方向：
 
 ```text
 User -> Delegate Task -> Decision Engine -> Runtime -> Result Delivery
@@ -225,22 +217,13 @@ type RuntimeInvocation = {
 
 Workspace 是第一入口。
 
-用户动作建议使用：
+用户动作：
 
 ```text
 Delegate Task
 Approve Action
 Provide Context
 View Result
-```
-
-不要使用：
-
-```text
-Submit Task
-Pick Workflow
-Inspect Run
-Debug ToolCall
 ```
 
 普通用户界面展示：
@@ -307,26 +290,7 @@ Foundation
 - Storage：附件、文件、导出物。
 - Queue：异步任务、重试、恢复事件。
 
-## 12. MVP 删除项
-
-MVP 不单独实现：
-
-- Evaluation Layer。
-- Identity Layer。
-- Policy Layer。
-- Context Layer。
-- Outcome Layer。
-- Employee Decision Layer。
-
-这些概念要么删除，要么合并为：
-
-- Decision Engine。
-- Employee Registry。
-- Runtime 内部模块。
-- Result Delivery。
-- 未来 Observability。
-
-## 13. 实现顺序
+## 12. 实现顺序
 
 建议顺序：
 
