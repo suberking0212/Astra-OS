@@ -23,7 +23,6 @@ flowchart TD
   FE[Frontend<br/>Workspace] --> API[API Layer<br/>JWT / Auth / REST / WS / Organization / Marketplace API]
   API --> ACCT[Account Service<br/>SMTP / Email]
   API --> RT[AI Runtime]
-  ACCT --> FD[Foundation Layer]
   RT --> FD
   FD[Foundation Layer<br/>LLM / Browser / MCP / Database / Redis / Storage]
 ```
@@ -152,7 +151,7 @@ Foundation Layer
 - Database：账号、工作区、任务、Runtime 状态和审计记录。
 - Redis：短期状态、锁、队列辅助和恢复事件。
 - Storage：附件、文件和导出物。
-- Queue：异步任务、重试、调度和后台执行。
+- Queue：Background Job、Retry、Resume Event、Delayed Task。
 
 ## 8. 数据域
 

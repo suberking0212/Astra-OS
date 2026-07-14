@@ -302,7 +302,7 @@ Foundation
 - Database：业务数据、Runtime 状态、审计记录。
 - Redis：短期状态、锁、队列辅助。
 - Storage：附件、文件、导出物。
-- Queue：异步任务、重试、恢复事件。
+- Queue：Background Job、Retry、Resume Event、Delayed Task。
 
 ## 12. 实现顺序
 

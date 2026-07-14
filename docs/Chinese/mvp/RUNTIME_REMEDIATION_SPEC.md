@@ -380,6 +380,8 @@ Foundation
 
 Runtime 不重新实现这些基础设施，只通过清晰接口使用它们。
 
+Queue 主要负责 Background Job、Retry、Resume Event、Delayed Task。
+
 ## 13. MVP 实现顺序
 
 1. TaskRequest / TaskDecision / RuntimeInvocation / TaskResult。
