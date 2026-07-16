@@ -172,7 +172,7 @@ export const phase1WorkspacePreview: WorkspacePhase1Preview = {
       kind: "approval",
       title: "Confirm follow-up",
       body:
-        "是否创建一个 Support follow-up task？这会把客户邮箱、订单号和问题摘要写入 Support queue。",
+        "是否创建一个 Support follow-up item？这会保存客户邮箱、订单号和问题摘要，供支持团队后续处理。",
       createdAt: "10:05",
     },
     {
@@ -212,7 +212,7 @@ export const phase1WorkspacePreview: WorkspacePhase1Preview = {
       {
         id: "timeline_004",
         label: "Follow-up task ready",
-        description: "Waiting for confirmation before placing the summary in the support queue.",
+        description: "Waiting for confirmation before creating the support follow-up item.",
         status: "active",
         timestamp: "10:05",
       },
@@ -258,7 +258,7 @@ export const phase1WorkspacePreview: WorkspacePhase1Preview = {
     id: "approval_001",
     title: "Create a support follow-up item?",
     description:
-      "AstraOS will place the customer email, order number, and issue summary in the support queue.",
+      "AstraOS will create a support follow-up item containing the customer email, order number, and issue summary.",
     riskLevel: "medium",
     businessImpact:
       "The support team will receive a follow-up item tied to this customer complaint.",
@@ -281,7 +281,7 @@ export const phase1WorkspacePreview: WorkspacePhase1Preview = {
       {
         label: "Prepared follow-up",
         value:
-          "Support queue item for alex@example.com, order ACME-10492, urgent delivery complaint.",
+          "Support follow-up item for alex@example.com, order ACME-10492, urgent delivery complaint.",
       },
       {
         label: "Risk note",

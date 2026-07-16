@@ -2,6 +2,8 @@
 
 验收日期：2026-07-16
 
+后续审计说明：本记录只证明 commit `0953b8c62b03922e581d9374d6f51ebf0f37798b` 在当次重新验收范围内通过。之后的再次审计发现 HumanExecutor 缺少 `human` RuntimeInvocation、Direct Human Routing 与 Human Takeover 未明确区分、MVP Governance 清单和可选 Queue 清单仍有表述缺口。后续文档已补齐这些语义并扩展 `pnpm docs:check`；这些补充不改变 Gate 0 的工程、数据或系统主权结论，也不应被误读为已经存在于该历史 commit 中。
+
 ## 1. 验收元数据
 
 - Phase：Phase 0 — Rebuild Baseline Corrective Reacceptance
@@ -84,6 +86,6 @@
 
 ## 7. 最终结论
 
-Gate 0 的工程基线继续有效，原验收遗漏的文档冲突已全部纠正，陈旧内容已封存，自动文档一致性检查已建立。Phase 0 可以重新标记为 `accepted`，Phase 1 解除阻塞并回到 `not_started`。
+Gate 0 的工程基线继续有效，当次重新验收范围内识别的文档冲突已经纠正，陈旧内容已封存，自动文档一致性检查已建立。Phase 0 可以重新标记为 `accepted`，Phase 1 解除阻塞并回到 `not_started`。后续识别出的 Human 路由、Governance 清单和 Queue 清单缺口按本记录开头的后续审计说明处理。
 
 正式结论：`accepted`。

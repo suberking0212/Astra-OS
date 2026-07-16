@@ -4,12 +4,15 @@
 
 本文档落实 `PHASED_ENGINEERING_DELIVERY_PLAN.md` 的 Phase 0。它记录当前真实入口、真实数据源、工程边界、旧资产处置、数据迁移策略和 Phase 1 backlog，但不替代任何上位权威文档。
 
+范围说明：本文档中的“当前真实基线”统一标记为 `[CURRENT]`；Phase 1 backlog 标记为 `[MVP-P1]`。其余 MVP、Post-MVP 和 Deferred 能力以 `MVP_SCOPE_AND_LONG_TERM_ROADMAP.md` 为准。本文件未列出的长期对象不代表被否定，也不代表已经实现。
+
 ## 1. 文档权威与冲突处理
 
 权威顺序固定为：
 
 ```text
 ARCHITECTURE_BASELINE.md
+  -> MVP_SCOPE_AND_LONG_TERM_ROADMAP.md
   -> TASK_PRESENTATION_CONTRACT.md
   -> RUNTIME_REMEDIATION_SPEC.md
   -> WORKSPACE_VISUAL_BASELINE.md
@@ -21,6 +24,7 @@ ARCHITECTURE_BASELINE.md
 | 问题 | 唯一权威 |
 | --- | --- |
 | 系统层级、主权、禁止越权 | `ARCHITECTURE_BASELINE.md` |
+| 当前、MVP、Post-MVP、Deferred 实施范围 | `MVP_SCOPE_AND_LONG_TERM_ROADMAP.md` |
 | Runtime 到 Workspace 的用户语义 | `TASK_PRESENTATION_CONTRACT.md` |
 | Runtime 状态机、对象、治理、Executor Adapter | `RUNTIME_REMEDIATION_SPEC.md` |
 | Workspace 视觉与交互边界 | `WORKSPACE_VISUAL_BASELINE.md` |
@@ -28,9 +32,9 @@ ARCHITECTURE_BASELINE.md
 
 `AI_EMPLOYEE_HARNESS_DESIGN.md` 是 Employee、Governance Harness 和 Executor 关系的辅助设计；其中 Sequence A-F 只表示设计内部实现顺序，不表示项目 Phase 状态。`TEMP_WORKSPACE_FIRST_REMEDIATION_PLAN.md` 是历史参考，若与上述权威文档冲突，始终以上述权威文档为准。
 
-核对结论：权威文档在以下主权上保持一致：Workspace 只消费 Presentation View Model；Managed Runtime 持有 Task、Interaction、恢复与 TaskResult 主权；Governance Harness Services 持有执行边界；Executor 负责实际执行；Hermes 只是可替换 External Agent Executor Backend；Tool 只能通过 Tool Gateway 受治理调用。
+核对结论：权威文档在以下主权上保持一致：Workspace 只消费 Presentation View Model；Managed Runtime 持有 Task、Interaction、恢复、Direct Human Routing、Human Takeover 与 TaskResult 主权；Governance Harness Services 持有执行边界和 Approval 主权；Executor 负责实际执行；HumanExecutor 既可由 TaskDecision 直接选择，也可由运行中重新决策选择；人工只批准原 Executor 动作时不构成 HumanExecutor；Hermes 只是可替换 External Agent Executor Backend；Tool 只能通过 Tool Gateway 受治理调用。
 
-## 2. 当前真实基线
+## 2. `[CURRENT]` 当前真实基线
 
 | 类别 | 当前真实位置 | 说明 |
 | --- | --- | --- |
@@ -157,7 +161,7 @@ projects
 - [x] 启动脚本不再公布已删除的旧 Admin 路由。
 - [x] 增加自动化基线检查，防止上述标记重新进入正式代码。
 
-## 7. Phase 1 可执行 backlog
+## 7. `[MVP-P1]` Phase 1 可执行 backlog
 
 以下任务不依赖未决架构问题，按顺序执行：
 
@@ -175,4 +179,4 @@ projects
 
 原 Gate 0 验收在实现 commit `d1c3e21f686c292a05988d2b48595bc81eb41504` 上完成，但后续完整文档审计确认产品定位、主权、RuntimeInvocation、Executor 分类和 Presentation 字段冲突在该 commit 中已经存在，因此原验收记录 `phase-acceptance/GATE_0_ACCEPTANCE.md` 已标记为 `superseded`。
 
-文档纠偏基线 commit `0953b8c62b03922e581d9374d6f51ebf0f37798b` 已完成重新验证，正式重新验收记录位于 `phase-acceptance/GATE_0_REACCEPTANCE.md`。当前 Phase 0 状态为 `accepted`，Phase 1 已解除阻塞并回到 `not_started`。后续状态仍只能由 `PHASED_ENGINEERING_DELIVERY_PLAN.md` 和对应正式验收记录证明；本文档、Preview 或代码常量不能单独证明 Phase 状态。
+文档纠偏基线 commit `0953b8c62b03922e581d9374d6f51ebf0f37798b` 已完成重新验证，正式重新验收记录位于 `phase-acceptance/GATE_0_REACCEPTANCE.md`。后续发现的 Human routing、Governance、Queue 和 Interaction 基础类型缺口记录在 `phase-acceptance/GATE_0_SUPPLEMENTAL_CONSISTENCY_AUDIT.md`；该补充审计在绑定最终 commit 前为 `provisional_pass`，不单独改变 Gate 状态。当前 Phase 0 状态为 `accepted`，Phase 1 已解除阻塞并回到 `not_started`。后续状态仍只能由 `PHASED_ENGINEERING_DELIVERY_PLAN.md` 和对应正式验收记录证明；本文档、Preview、补充审计草案或代码常量不能单独证明 Phase 状态。

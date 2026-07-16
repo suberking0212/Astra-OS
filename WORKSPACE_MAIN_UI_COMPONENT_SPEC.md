@@ -5,9 +5,12 @@
 本文档是 Phase 1/2 的组件拆分辅助规范，不描述当前页面已经具备的 Task Runtime 能力，也不覆盖以下权威文档：
 
 - `docs/Chinese/mvp/ARCHITECTURE_BASELINE.md`
+- `docs/Chinese/mvp/MVP_SCOPE_AND_LONG_TERM_ROADMAP.md`
 - `docs/Chinese/mvp/TASK_PRESENTATION_CONTRACT.md`
 - `docs/Chinese/mvp/WORKSPACE_VISUAL_BASELINE.md`
 - `docs/Chinese/mvp/PHASED_ENGINEERING_DELIVERY_PLAN.md`
+
+实施标记：现有 Auth / Workspace 骨架为 `[CURRENT]`；本文档的组件拆分和 Preview 工作为 `[MVP-P1]`，Repository / View Model 正式冻结为 `[MVP-P2]`。Approval、takeover、authentication 等组件名只表示 Presentation 能力边界：真实 Approval 属于 `[MVP-P4]`，takeover / Human Work 和外部 authentication 流程属于 `[MVP-CONTRACT]` 或 `[DEFERRED]`。具体范围以 `MVP_SCOPE_AND_LONG_TERM_ROADMAP.md` 为准。
 
 ## 1. 当前真实状态
 

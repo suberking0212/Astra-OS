@@ -1,8 +1,25 @@
 # AstraOS 主架构基线
 
-更新时间：2026-07-15
+更新时间：2026-07-16
 
 本文档是 AstraOS 的主架构文档。它只定义长期稳定的产品定位、系统层级、控制面、托管运行时和执行器边界。
+
+## 0. 实施范围标记
+
+本文件中的架构边界长期有效，但“出现在架构中”不等于“当前已经实现”。具体实施时间和深度以 `MVP_SCOPE_AND_LONG_TERM_ROADMAP.md` 为唯一范围权威：
+
+| 内容 | 范围标记 |
+| --- | --- |
+| 当前 Auth、owner-scoped Workspace、三表数据基线 | `[CURRENT]` |
+| Workspace / Presentation 产品边界 | `[MVP-P1]`、`[MVP-P2]` |
+| Managed Runtime、Interaction、只读 Tool 最小纵向切片 | `[MVP-P3]` |
+| 单级 Approval、幂等写操作、第一个 Customer Support Employee | `[MVP-P4]` |
+| HumanExecutor、WorkflowExecutor、ExternalAgentExecutor 的长期分类和 Adapter 边界 | `[MVP-CONTRACT]` |
+| External Agent / Hermes 真实 POC | `[POST-MVP-P5]` |
+| Organization、Assignment Queue、多级审批、完整 RBAC / ABAC、平台化 Queue | `[DEFERRED]` |
+| 自研模型执行型 Agent Harness | `[PROHIBITED]` |
+
+产品 MVP Exit 为 Gate 4 accepted。HumanExecutor 在 MVP 内保留正式语义和接口，但真实人工分派、认领、执行与结果回收不属于 Gate 4 必选实现。
 
 ## 1. 产品定位
 
@@ -17,7 +34,7 @@ AstraOS 不自研模型执行型 Agent Harness。Hermes 等 Agent Runtime 负责
 
 AstraOS 实现 Governance Harness Services，负责 Context Envelope、Tool Gateway、Permission、Approval、Invocation Validation、Policy Enforcement、Idempotency Enforcement 和 Outcome Evidence Collection。
 
-AstraOS Managed Runtime 负责持久任务生命周期、Interaction 持久化、Pause / Resume 协调、跨 Executor 路由与恢复、Reconciliation / Compensation 和 Human Takeover。
+AstraOS Managed Runtime 负责持久任务生命周期、Interaction 持久化、Pause / Resume 协调、跨 Executor 路由与恢复、Reconciliation / Compensation、Direct Human Routing 和 Human Takeover。
 ```
 
 AstraOS 的目标是完成 Task，而不是展示 Agent。
@@ -49,7 +66,7 @@ flowchart TB
 
     HERMES[Hermes<br/>Replaceable Agent Runtime Backend<br/>LLM + Execution Harness]
 
-    FOUNDATION[Foundation Layer<br/>LLM / Browser / MCP / Database / Redis / Storage]
+    FOUNDATION[Foundation Layer<br/>LLM / Browser / MCP / Database / Redis / Storage / Optional Queue]
 
     FE --> API
     API --> ACCOUNT
@@ -86,7 +103,7 @@ External Agent Backends
     └── LLM + Hermes Execution Harness
 
 Foundation Layer
-（LLM Gateway / Browser / MCP / Database / Redis / Storage）
+（LLM Gateway / Browser / MCP / Database / Redis / Storage / Queue（按需启用））
 ```
 
 Account Service 是 API Layer 下的业务服务，负责账号、身份、邮箱验证和邮件发送。
@@ -131,13 +148,16 @@ Executors
 └── ToolAction（单次 Tool 调用适配器）
 ```
 
-MVP 只完整实现三块：
+MVP 必须落地四类逻辑模块：
 
 ```text
 Control Plane 配置
+Governance 内部模块
 Managed Runtime 核心
 Executor Adapter
 ```
+
+这里的“落地”不表示四类模块从第一个 Phase 起同时达到完整平台能力。Phase 3 先实现不可绕过的最低治理，包括 Tool 注册与 schema 校验、side-effect 分类、operation identity、默认拒绝写操作和基础 Audit；Phase 4 再补齐首个业务闭环所需的 Permission、单级 Approval、Idempotency、闭环 Audit 和场景级 reconciliation。Direct Human Routing 与 Human Takeover 在 MVP 内保留统一语义和 Adapter contract，不实现完整 Human Work assignment 流程。MVP 中 Governance 仍可作为 Runtime Service 内部模块存在，不提前拆成独立微服务或通用治理平台。
 
 以下能力在 MVP 中只能作为内部模块、接口、枚举、状态字段或扩展点预留，不应提前平台化：
 
@@ -179,7 +199,7 @@ Task Routing Configuration 只负责选择执行路径，不代表 Agent Runtime
 
 AstraOS Governance Harness Services 负责 Context Envelope、Tool Gateway、Permission / Approval、Invocation Validation、Policy Enforcement、Idempotency Enforcement 和 Outcome Evidence Collection。
 
-AstraOS Managed Runtime 负责 Task 生命周期、Interaction 持久化、Pause / Resume 协调、跨 Executor 路由与恢复、Reconciliation / Compensation、Human Takeover，以及 TaskResult 生成和交付。
+AstraOS Managed Runtime 负责 Task 生命周期、Interaction 持久化、Pause / Resume 协调、跨 Executor 路由与恢复、Reconciliation / Compensation、Direct Human Routing、Human Takeover，以及 TaskResult 生成和交付。
 
 逻辑执行形态包括：
 
@@ -193,7 +213,30 @@ Executor
 
 Hermes 是可插拔 Agent Runtime / Executor Backend。Hermes Execution Harness 负责模型循环、Executor-local Context、工具调用循环、局部验证和纠正、模型适配、Skills、Subagents、Executor-local retry 和 stop conditions。
 
+Human Executor 表示由人工承担实际业务执行、专业处理、监督或接管工作。它既可以由 TaskDecision 在任务开始时直接选择，也可以在其他 Executor 执行过程中通过重新决策选择：
+
+```text
+Direct Human Routing
+  TaskDecision
+    -> RuntimeInvocation(invocation_type = human)
+    -> HumanExecutor
+
+Human Takeover
+  Existing Executor
+    -> takeover intent / policy escalation
+    -> 必要时 InteractionRequest(kind = takeover)
+    -> new TaskDecision
+    -> RuntimeInvocation(invocation_type = human)
+    -> HumanExecutor
+```
+
+Direct Human Routing 不要求先发生自动执行、失败或 takeover Interaction。Human Takeover 表示任务原本由其他 Executor 承接，运行过程中因用户请求、Executor 请求、策略要求或不可恢复条件转交人工；只有需要用户选择或确认接管时，才必须创建 `InteractionRequest(kind = "takeover")`。
+
+Approval 与 Human Executor 不等价。Approval 表示人工决定某个受治理动作是否允许继续，动作仍可由原 Tool / Workflow / Agent Executor 执行；只有人工取得实际任务执行责任时，才路由到 Human Executor。
+
 Tool 是 Executor 通过 AstraOS Tool Gateway 请求的受治理能力，不与 Direct Model Runtime、Workflow Runtime、Agent Runtime 或 Human Executor 并列。现有 `ToolActionExecutor` 是封装单次受治理 Tool 调用的 Executor Adapter，不代表 Tool 本身是完整 Executor。
+
+Queue 是按需启用的 Foundation 能力，可用于 Background Job、Retry、Resume Event 和 Delayed Task；长期也可服务于 `[DEFERRED]` 的人工任务分派。MVP 不要求部署独立 Queue；未启用 Queue 时仍必须通过持久化状态和受控调度满足恢复、幂等和审计要求。
 
 Interaction Runtime / Presentation Contract 属于 Managed Runtime，是贯穿 Task 执行过程的横切能力，不是 Executor Backend 完成后的后置阶段。具体契约以 `TASK_PRESENTATION_CONTRACT.md` 为准。
 
@@ -237,6 +280,7 @@ Task 路径是调用关系，不改变结构归属：Control Plane 定义规则�
 ## 7. 权威文档分工
 
 - `ARCHITECTURE_BASELINE.md`：定义长期稳定的架构边界和禁止事项。
+- `MVP_SCOPE_AND_LONG_TERM_ROADMAP.md`：定义当前、MVP、Post-MVP 和 Deferred 的唯一实施范围与深度。
 - `TASK_PRESENTATION_CONTRACT.md`：定义 Runtime 执行语义到 Workspace 用户交互语义的承接链路、可见性边界、InteractionRequest / InteractionResponse 和 View Model 契约。
 - `RUNTIME_REMEDIATION_SPEC.md`：定义 Managed Runtime 的工程契约、状态机、ToolDefinition、Permission、Approval、Audit、TaskResult 和 executor adapter。
 - `PHASED_ENGINEERING_DELIVERY_PLAN.md`：定义分阶段交付顺序、POC 范围和验收标准。

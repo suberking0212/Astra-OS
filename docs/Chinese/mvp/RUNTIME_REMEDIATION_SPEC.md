@@ -1,10 +1,25 @@
 # AstraOS Runtime 整改规格
 
-更新时间：2026-07-15
+更新时间：2026-07-16
 
 本文档定义 Astra OS Managed Runtime 与 Runtime Adapter 的工程整改要求。AstraOS 的职责不是展示 Agent，也不是只执行 Workflow，而是把用户委托的 Task 可靠、可控、可恢复、可审计地完成。
 
 Runtime 执行语义到 Workspace 用户交互语义的承接链路以 `TASK_PRESENTATION_CONTRACT.md` 为准。本文档负责 Managed Runtime 的工程规格，并补充 Interaction Runtime 在执行、暂停、恢复、审批和审计中的落地要求。
+
+## 0. 实施范围标记
+
+本文档同时包含 MVP 必须实现的 Runtime 子集和长期完整工程契约。实施范围以 `MVP_SCOPE_AND_LONG_TERM_ROADMAP.md` 为准：
+
+| Runtime 内容 | 范围标记 |
+| --- | --- |
+| Task / Interaction / TaskResult 语义和 Presentation 承接 | `[MVP-P1]`、`[MVP-P2]` 形成并冻结契约 |
+| 持久 Task、追问恢复、DirectAnswer、Clarification、只读 Tool、最低 Audit | `[MVP-P3]` |
+| 单级 Approval、Permission、Idempotent Write、闭环 Audit | `[MVP-P4]` |
+| HumanExecutor invocation、Adapter、Direct Routing / Takeover 区分 | `[MVP-CONTRACT]` |
+| ExternalAgentExecutor 真实接入 | `[POST-MVP-P5]` |
+| Human Work assignment、Workflow production、独立 Queue、复杂恢复和通用补偿 | `[DEFERRED]` |
+
+逻辑对象可以先作为内部类型、接口、状态字段或聚合的一部分存在，不要求一对象一表、一模块一服务。`RuntimeInvocation(invocation_type = human)` 的存在不表示 MVP 已经实现真实人工工作分派。
 
 ## 1. Runtime 定位
 
@@ -23,7 +38,7 @@ Hermes 是 Agent Runtime / Executor Backend 的一种，不是整个系统。
 ```text
 AstraOS Control Plane 定义 AI Employee、Employee Execution Profile、资源、策略、结果合同和执行器配置。
 AstraOS Governance Harness Services 管理 Context Envelope、Tool Gateway、Permission、Approval、Invocation Validation、Policy Enforcement、Idempotency Enforcement 和 Outcome Evidence Collection。
-AstraOS Managed Runtime 管理持久任务、Interaction、Pause / Resume、跨 Executor 路由与恢复、Reconciliation / Compensation、Human Takeover 和结果交付。
+AstraOS Managed Runtime 管理持久任务、Interaction、Pause / Resume、跨 Executor 路由与恢复、Reconciliation / Compensation、Direct Human Routing、Human Takeover 和结果交付。
 Hermes Agent Runtime 决定自主执行循环中的下一步行动，并通过其 Execution Harness 组织模型、Executor-local Context、工具请求和执行环境。
 ```
 
@@ -66,7 +81,9 @@ MVP 实现约束：
 
 Runtime Service 可以先作为 API 内部模块存在，而不是独立 runtime 微服务。Interaction、Permission、Approval、Audit、Result Validation 可以先作为 Runtime Service 内的子模块、接口、字段和最小状态流转实现；只有当真实业务复杂度要求时，才逐步拆成独立服务、独立事件流或更复杂的状态机。
 
-MVP 实际落地结构：
+Human Executor 是正式逻辑 Executor，既支持任务开始时的 Direct Human Routing，也支持其他 Executor 执行中的 Human Takeover。Approval 仍属于 Governance Harness Services：人工只批准一个由 Tool、Workflow 或 Agent 执行的动作时，不产生 `human` invocation；只有人工取得实际任务执行责任时，才路由到 Human Executor。
+
+MVP 与长期扩展共同遵守的逻辑结构：
 
 ```text
 API
@@ -351,13 +368,15 @@ Decision Engine 与 Runtime Adapter 不通过 prompt 文本、业务分支代码
 | `tool_action` | 执行单个受控 Tool，可按风险触发审批 |
 | `workflow` | 创建 WorkflowRun / AppRun 并执行步骤 |
 | `external_agent` | 通过 ExternalAgentExecutor 启动受控外部 Agent Runtime 执行；MVP production 默认关闭 |
+| `human` | 创建受治理的 Human Work Item，由 HumanExecutor 承接直接人工执行、专业处理、监督或接管 |
 
 校验要求：
 
 - `invocation_type = workflow` 时，`workflow_template_key` 必须存在且已注册。
 - `invocation_type = tool_action` 时，`tool_key` 必须存在且已注册。
 - `invocation_type = external_agent` 时，必须选择已注册且通过 capability / policy 校验的 ExternalAgentExecutor backend。
-- `input` 必须通过对应 Tool 或 Workflow input schema 校验。
+- `invocation_type = human` 时，必须指定已注册的 HumanExecutor、所需人工角色、assignment policy、允许动作、可见上下文和 outcome_spec。
+- `input` 必须通过对应 invocation 的 input schema 校验；Tool、Workflow、External Agent 和 Human Work 分别使用各自已注册的契约。
 - `permission_grant_ids` 必须属于当前 Task / Workspace / User。
 - `approval_requirements` 必须与 ToolDefinition 或 Workflow Step 的写操作匹配。
 - `outcome_spec` 必须持久化到 Task / Runtime 记录中。
@@ -367,6 +386,29 @@ Decision Engine 与 Runtime Adapter 不通过 prompt 文本、业务分支代码
 - Runtime Adapter 根据 `raw_input` 临时猜测 workflow。
 - Runtime Adapter 执行 Agent 返回的任意 tool name。
 - Runtime Adapter 在缺少 permission grant 或 approval requirement 的情况下执行写操作。
+
+Human 路由要求：
+
+```text
+Direct Human Routing
+  TaskRequest
+    -> TaskDecision(selected_executor = human_executor)
+    -> RuntimeInvocation(invocation_type = human)
+    -> HumanExecutor
+
+Human Takeover
+  Existing Executor
+    -> takeover intent / policy escalation
+    -> 需要用户参与时创建 InteractionRequest(kind = takeover)
+    -> new TaskDecision(selected_executor = human_executor)
+    -> RuntimeInvocation(invocation_type = human)
+    -> HumanExecutor
+```
+
+- Direct Human Routing 可以由政策、受监管角色要求、用户明确选择或自动能力缺失触发，不要求存在先前 Executor、失败事件或 takeover Interaction。
+- Human Takeover 表示原本由其他 Executor 承接的 Task 在运行中升级给人工；新的 TaskDecision 必须记录 `routing_mode = takeover`、`reason_code` 和 `source_invocation_id`。
+- 如果策略可以自动决定升级，不需要用户选择或确认，则可以直接重新决策，不得为了形式完整而创建没有用户动作的 InteractionRequest。
+- Approval 只改变受治理动作是否允许继续；若动作仍由原 Executor 执行，则不得改写为 `invocation_type = human`。
 
 ## 7. Runtime 状态机
 
@@ -406,16 +448,18 @@ cancelled
 
 Interaction Runtime 是 Astra OS Managed Runtime 内部模块，负责把执行侧事件转换为可持久化、可恢复、可审计的用户交互请求。它是贯穿任务生命周期的横切能力，不是 Hermes、Tool、Workflow 或 Browser 执行完成之后的固定后置阶段。
 
-Executor Backend 可以在执行中随时发出缺信息、审批、授权、错误恢复或人工接管等 `Interaction Intent`。Managed Runtime 必须接收这些意图，创建 `InteractionRequest`，必要时暂停对应运行，并在用户响应、审批结果或恢复事件到达后，通过受控 `Runtime Resume Event` / `ExecutorControl` 恢复或终止执行。
+Executor Backend 可以在执行中随时发出缺信息、审批、授权、错误恢复或人工接管等 `Interaction Intent`。Managed Runtime 必须接收这些意图；需要用户参与时创建 `InteractionRequest`，必要时暂停对应运行，并在用户响应、审批结果或恢复事件到达后，通过受控 `Runtime Resume Event` / `ExecutorControl` 恢复、终止或重新路由执行。策略能够自动决定的人工升级不创建无用户动作的 InteractionRequest，而是直接产生新的 TaskDecision 和 `RuntimeInvocation(invocation_type = human)`。
 
 它不负责渲染 UI，也不负责执行 Tool。它负责维护：
 
 ```text
 Interaction Intent
-  -> InteractionRequest
-  -> Workspace View Model
-  -> InteractionResponse
-  -> Runtime Resume Event
+  -> 需要用户参与？
+      ├── 是：InteractionRequest
+      │     -> Workspace View Model
+      │     -> InteractionResponse
+      │     -> Runtime Resume / Re-decision Event
+      └── 否：TaskDecision / Runtime Control Event
 ```
 
 ### 8.1 InteractionRequest
@@ -423,22 +467,33 @@ Interaction Intent
 每个等待用户动作都必须创建 `InteractionRequest`。
 
 ```ts
+type InteractionKind =
+  | "input"
+  | "selection"
+  | "confirmation"
+  | "approval"
+  | "result"
+  | "takeover"
+  | "progress"
+  | "error_recovery"
+  | "file_request"
+  | "authentication";
+
+type InteractionAction =
+  | "submit"
+  | "select"
+  | "approve"
+  | "reject"
+  | "edit"
+  | "takeover"
+  | "cancel";
+
 type InteractionRequest = {
   id: string;
   taskId: string;
   runId: string | null;
   stepId: string | null;
-  kind:
-    | "input"
-    | "selection"
-    | "confirmation"
-    | "approval"
-    | "result"
-    | "takeover"
-    | "progress"
-    | "error_recovery"
-    | "file_request"
-    | "authentication";
+  kind: InteractionKind;
   status: "pending" | "submitted" | "resolved" | "cancelled" | "expired";
   blocking: boolean;
   schema: Record<string, unknown> | null;
@@ -471,7 +526,7 @@ type InteractionResponse = {
   interactionId: string;
   taskId: string;
   userId: string;
-  action: "submit" | "select" | "approve" | "reject" | "edit" | "takeover" | "cancel";
+  action: InteractionAction;
   data: Record<string, unknown>;
   submittedAt: string;
 };
@@ -544,7 +599,8 @@ Runtime Adapter
   ├── ClarificationExecutor
   ├── ToolActionExecutor
   ├── ExternalAgentExecutor（可选适配器）
-  └── WorkflowExecutor（可选）
+  ├── WorkflowExecutor（可选）
+  └── HumanExecutor
 ```
 
 Executor 负责执行流程。Tool 是 executor 调用的受控资源，不是与 Runtime Adapter 平级的流程。
@@ -570,6 +626,7 @@ Tool
 | ClarificationExecutor | Interaction / Waiting State Adapter |
 | WorkflowExecutor | Workflow Runtime Adapter |
 | ExternalAgentExecutor | Agent Runtime Adapter |
+| HumanExecutor | Human Executor Adapter |
 | ToolActionExecutor | 单次受治理 Tool 调用 Adapter |
 | ToolDefinition | Tool 治理合同 |
 | Tool | Executor 可以请求的受治理能力 |
@@ -892,12 +949,12 @@ Foundation
   ├── Database
   ├── Redis
   ├── Storage
-  └── Queue
+  └── Queue（按需启用）
 ```
 
 AstraOS 不重新实现这些基础设施，只通过清晰接口使用它们。
 
-Queue 主要负责 Background Job、Retry、Resume Event、Delayed Task。
+Queue 是可选 Foundation 能力，可用于 Background Job、Retry、Resume Event 和 Delayed Task；长期也可服务于 `[DEFERRED]` 的 Human Work assignment。MVP 不部署独立 Queue；单进程或低规模阶段先使用数据库持久化状态和受控调度，但不能因此降低恢复、幂等和事件审计要求。
 
 Hermes 等外部 Agent Runtime 属于 Runtime Adapter / Executor Backend / Foundation 之间的可选依赖。AstraOS 可以复用它们的 agent loop、memory、skill、sandbox、模型适配和工具生态，但不能把 RuntimeInvocation、Permission、Approval、Audit、TaskResult 的控制权转移给外部依赖。
 
@@ -908,17 +965,28 @@ Hermes 等外部 Agent Runtime 属于 Runtime Adapter / Executor Backend / Found
 - ExternalAgentExecutor 只负责适配、约束、事件归一化和结果回收。
 - Hermes POC 必须证明外部 runtime 可替换；不能让 AstraOS 的核心任务状态依赖 Hermes 私有 session 或 trace。
 
-## 14. MVP 实现顺序
+## 14. 分范围实现顺序
 
-1. TaskRequest / TaskDecision / RuntimeInvocation / TaskResult。
-2. InteractionRequest / InteractionResponse / Workspace View Model。
-3. DirectAnswerExecutor。
-4. ClarificationExecutor。
-5. ToolDefinition + ToolActionExecutor。
-6. Permission / Approval pause-resume。
-7. Audit 记录。
-8. ExternalAgentExecutor 接口定义：定义受控输入、工具代理、执行事件、Interaction Intent、候选结果和失败映射，production 默认关闭。
-9. ExternalAgentExecutor POC：在 Permission / Approval / Audit / Idempotency 可用后，以 Hermes 作为可替换执行后端验证适配边界。
-10. WorkflowExecutor。
+### 14.1 MVP Required
 
-WorkflowExecutor 放在后面实现，避免 MVP 被 Workflow 复杂度拖慢。
+1. `[MVP-P1]` 形成 InteractionRequest / InteractionResponse / Workspace View Model 语义草案；`[MVP-P2]` 冻结公开 Presentation Contract。
+2. `[MVP-P3]` TaskRequest / TaskDecision / RuntimeInvocation / TaskResult。
+3. `[MVP-P3]` DirectAnswerExecutor、ClarificationExecutor。
+4. `[MVP-P3]` ToolDefinition + 只读 ToolActionExecutor、operation identity 和最低 Audit。
+5. `[MVP-P4]` Permission / 单级 Approval pause-resume / Idempotency / 闭环 Audit。
+6. `[MVP-P4]` Customer Support Employee 的一个幂等写 Tool 和 TaskResult 闭环。
+
+### 14.2 MVP Contract Only
+
+- `[MVP-CONTRACT]` HumanExecutor：定义 `human` invocation、Adapter、Direct Human Routing、Human Takeover、允许动作、可见上下文、完成标准和结果回收语义；不实现真实团队分派、认领、转派、SLA 或人工执行 production 主路径。
+- `[MVP-CONTRACT]` ExternalAgentExecutor：定义受控输入、工具代理、执行事件、Interaction Intent、候选结果和失败映射，production 默认关闭。
+- `[MVP-CONTRACT]` WorkflowExecutor：保留稳定接口和 invocation taxonomy，不接入 MVP production 主路径。
+- `[MVP-CONTRACT]` Queue：保留 Foundation 接口，MVP 使用数据库持久状态和受控调度。
+
+### 14.3 Post-MVP / Deferred
+
+- `[POST-MVP-P5]` ExternalAgentExecutor / Hermes POC：在 Gate 4 业务基线和治理能力可用后验证。
+- `[DEFERRED]` Human Work assignment、Assignment Inbox、claim / reassign、值班、SLA 和多人协同。
+- `[DEFERRED]` WorkflowExecutor production、通用 Workflow Builder、复杂 Checkpoint / Recovery 和通用 compensation engine。
+
+WorkflowExecutor 和完整 Human Work 流程放在真实场景证明必要之后实现，避免 MVP 被尚未验证的协作与编排复杂度拖慢。

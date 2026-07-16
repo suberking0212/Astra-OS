@@ -107,7 +107,7 @@ Frontend（Workspace）
       └── Human Executor
   -> Allowed Tools through AstraOS Tool Gateway
   -> Outcome Validation / TaskResult
-  -> Foundation Layer（LLM / Browser / MCP / Database / Redis / Storage）
+  -> Foundation Layer（LLM / Browser / MCP / Database / Redis / Storage / Optional Queue）
 ```
 
 Agent Runtime is an autonomous execution unit. AI Employee is an enterprise business responsibility and governance object. Employee Execution Profile selects and constrains the Executor through Task Routing Configuration.
@@ -116,9 +116,19 @@ AstraOS does not build a second model-execution Agent Harness. Hermes and other 
 
 Tools are governed capabilities requested by Executors through the AstraOS Tool Gateway. Tools are not independent Executor types.
 
+Human execution supports both direct routing and takeover. A task may route directly to `HumanExecutor` when policy, professional qualification, user choice, or capability constraints require human execution from the start. Takeover is a separate escalation path from an existing Executor. Human approval alone does not make the human an Executor when the approved action is still performed by a Tool, Workflow, or Agent Runtime.
+
+Queue is an optional Foundation capability for background jobs, retry, resume events, and delayed tasks; it may later support deferred human-work assignment. It is not part of the current MVP deployment dependencies.
+
+Product MVP exits at Gate 4 with the first governed Customer Support Employee loop. HumanExecutor remains an MVP contract and architecture boundary, but real human-work assignment, claiming, team inboxes, and organization collaboration are deferred. Phase 5 External Agent / Hermes integration is a post-MVP POC, not an MVP launch prerequisite.
+
 Primary architecture source:
 
 - `docs/Chinese/mvp/ARCHITECTURE_BASELINE.md`
+
+Authoritative implementation scope and long-term roadmap:
+
+- `docs/Chinese/mvp/MVP_SCOPE_AND_LONG_TERM_ROADMAP.md`
 
 Authoritative supporting documents, in precedence order:
 

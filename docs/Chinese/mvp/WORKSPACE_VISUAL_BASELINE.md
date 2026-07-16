@@ -6,6 +6,20 @@
 
 Runtime 到 Workspace 的展示与交互契约以 `TASK_PRESENTATION_CONTRACT.md` 为准。本文档只定义 Workspace 在视觉和交互层面的边界。
 
+## 0. 实施范围标记
+
+具体实施时间以 `MVP_SCOPE_AND_LONG_TERM_ROADMAP.md` 为准：
+
+- `[CURRENT]`：登录、邮箱验证、Workspace 列表/详情骨架和明确的 Task unavailable 状态。
+- `[MVP-P1]`：Task Composer、Active Task、Needs Attention、Result / History 产品形态和隔离 Preview。
+- `[MVP-P2]`：通用 Interaction Renderer、Repository / View Model 接入和完整 Mock 闭环。
+- `[MVP-P3]`：真实 context、progress、error recovery 和 TaskResult 状态。
+- `[MVP-P4]`：真实单级 approval 和受治理写操作结果。
+- `[MVP-CONTRACT]`：takeover、authentication 等长期 renderer 语义；不要求 Gate 4 前接通真实业务流。
+- `[DEFERRED]`：Human Work Inbox、Assignment Board、多人协作、组织治理和复杂审批界面。
+
+保留布局位置、renderer kind 或视觉样片不表示对应后端能力已经实现。
+
 ## 1. 产品定位
 
 ```text
@@ -134,6 +148,8 @@ error_recovery  -> recovery choices
 file_request    -> file upload
 authentication  -> auth handoff
 ```
+
+MVP 必须优先完成 `input / selection / confirmation / approval / result / progress / error_recovery` 中 Customer Support 闭环实际使用的子集。`takeover` 与 `authentication` 在 MVP 中可以只保留组件和契约边界；真实 Human Work 与外部授权流程按 `MVP_SCOPE_AND_LONG_TERM_ROADMAP.md` 后续实施。
 
 Renderer 要求：
 

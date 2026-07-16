@@ -4,6 +4,21 @@
 
 本文档定义 AstraOS 在 Harness 支持、维护和运行体系下承载 AI Employee 的应用设计。本文档基于当前已有设计，不重新定义主架构，不替代 `ARCHITECTURE_BASELINE.md`、`RUNTIME_REMEDIATION_SPEC.md` 或 `TASK_PRESENTATION_CONTRACT.md`。
 
+## 0. 实施范围标记
+
+本文档包含比产品 MVP 更远的完整设计。具体何时实现以 `MVP_SCOPE_AND_LONG_TERM_ROADMAP.md` 为准：
+
+| 设计内容 | 范围标记 |
+| --- | --- |
+| Presentation / Interaction、Task-first Runtime、ToolAction | `[MVP-P1]` 至 `[MVP-P3]` |
+| Permission、单级 Approval、Idempotency、Customer Support Employee | `[MVP-P4]` |
+| HumanExecutor、Direct Human Routing、Human Takeover 的概念和接口 | `[MVP-CONTRACT]` |
+| ExternalAgentExecutor / Hermes POC | `[POST-MVP-P5]` |
+| Memory 平台、Workflow production、多模态全量能力、Human Work assignment、复杂企业治理 | `[DEFERRED]` |
+| 自研或复制模型执行型 Agent Harness | `[PROHIBITED]` |
+
+本文档中的 TypeScript / JSON 示例是设计合同或候选 schema，不自动代表字段已在 OpenAPI、数据库或 production code 中冻结。Sequence A-F 表示设计依赖顺序；只有阶段计划中的 Gate 能证明实现完成。
+
 ## 1. 文档定位
 
 本文档回答一个问题：
@@ -53,7 +68,7 @@ AstraOS Managed Runtime 负责：
 - Pause / Resume Coordination。
 - Cross-executor Routing and Recovery。
 - Reconciliation / Compensation。
-- Human Takeover。
+- Direct Human Routing / Human Takeover。
 
 Audit、Observability 和 Evaluation 是独立横切能力，负责治理记录、运行诊断、效果评估和持续改进，不应被整体定义为第二套 Agent Harness。
 
@@ -135,11 +150,11 @@ flowchart TB
 | API Layer | 账号、JWT、REST / WS、Workspace API、Marketplace API |
 | Control Plane | AI Employee 定义、能力、知识范围、策略、Execution Profile、结果合同、模型与执行器配置 |
 | Governance Harness Services | Context Envelope、Tool Gateway、Permission、Approval、Invocation Validation、Policy Enforcement、Idempotency Enforcement、Outcome Evidence Collection |
-| Managed Runtime | Task 生命周期、Interaction 持久化、Pause / Resume、跨 Executor 路由与恢复、Reconciliation / Compensation、Human Takeover、结果交付 |
+| Managed Runtime | Task 生命周期、Interaction 持久化、Pause / Resume、跨 Executor 路由与恢复、Reconciliation / Compensation、Direct Human Routing、Human Takeover、结果交付 |
 | Runtime Adapter | 将 RuntimeInvocation 路由到 Direct Model、Clarification、Workflow、ExternalAgent、Human 或单次 ToolAction Adapter |
 | ExternalAgentExecutor | 受控接入 Hermes 等外部 Agent Runtime |
 | Hermes Execution Harness | 单次执行内部的模型循环、Executor-local Context、工具请求、局部验证和重试、Skills、Subagents |
-| Foundation | LLM、Browser、MCP、Database、Redis、Storage、Queue |
+| Foundation | LLM、Browser、MCP、Database、Redis、Storage、Queue（按需启用） |
 
 ## 5. 核心运行链路
 
@@ -207,7 +222,7 @@ type EmployeeCapability = {
   display_name: string;
   intent_examples: string[];
   supported_invocation_types: Array<
-    "direct_answer" | "clarification" | "tool_action" | "external_agent" | "workflow"
+    "direct_answer" | "clarification" | "tool_action" | "external_agent" | "workflow" | "human"
   >;
   required_permissions: string[];
 };
@@ -367,7 +382,26 @@ Executor
 - `Direct Model Runtime` 用于总结、解释、改写、分类和其他不需要自主工具循环的任务。
 - `Workflow Runtime` 用于执行路径可以预先定义、步骤顺序和业务约束明确的任务。
 - `Agent Runtime` 用于执行路径需要根据环境反馈动态决定的开放式任务。
-- `Human Executor` 用于必须由人工完成、监督、确认或接管的任务。
+- `Human Executor` 用于必须由人工实际执行、专业处理、监督或接管的任务。人工只批准原 Executor 动作时属于 Approval，不属于 Human Executor。
+
+Human Executor 有两类进入路径：
+
+```text
+Direct Human Routing
+  TaskDecision
+    -> RuntimeInvocation(invocation_type = human)
+    -> HumanExecutor
+
+Human Takeover
+  Existing Executor
+    -> takeover intent / policy escalation
+    -> 必要时 InteractionRequest(kind = takeover)
+    -> new TaskDecision
+    -> RuntimeInvocation(invocation_type = human)
+    -> HumanExecutor
+```
+
+Direct Human Routing 用于从一开始就必须由人工执行的 Task，例如政策限制、受监管专业角色、用户明确选择人工或自动能力不足；它不要求先发生自动执行或失败。Human Takeover 用于原本由其他 Executor 承接、运行过程中才升级给人工的 Task。Approval 只是人工授权原 Executor 的受治理动作继续执行，不自动等于 Human Executor。
 
 现有工程对象的逻辑映射：
 
@@ -377,6 +411,7 @@ Executor
 | ClarificationExecutor | Interaction / Waiting State Adapter |
 | WorkflowExecutor | Workflow Runtime Adapter |
 | ExternalAgentExecutor | Agent Runtime Adapter |
+| HumanExecutor | Human Executor Adapter |
 | ToolActionExecutor | 单次受治理 Tool 调用 Adapter |
 
 `ToolActionExecutor` 可以继续存在，但不代表 Tool 本身是一种完整 Executor。
@@ -450,7 +485,7 @@ AstraOS Managed Runtime 负责：
 
 - Durable Task Lifecycle、Interaction Persistence。
 - Pause / Resume Coordination、Cross-executor Routing and Recovery。
-- Reconciliation / Compensation、Human Takeover、TaskResult 交付。
+- Reconciliation / Compensation、Direct Human Routing、Human Takeover、TaskResult 交付。
 
 Audit、Observability 和 Evaluation 是独立横切能力，负责治理记录、运行诊断、评估数据集、模型替换、Harness 消融、Executor 选择评估和持续改进。
 
@@ -849,22 +884,33 @@ Interaction Intent
 ### 12.1 InteractionRequest
 
 ```ts
+type InteractionKind =
+  | "input"
+  | "selection"
+  | "confirmation"
+  | "approval"
+  | "result"
+  | "takeover"
+  | "progress"
+  | "error_recovery"
+  | "file_request"
+  | "authentication";
+
+type InteractionAction =
+  | "submit"
+  | "select"
+  | "approve"
+  | "reject"
+  | "edit"
+  | "takeover"
+  | "cancel";
+
 type InteractionRequest = {
   id: string;
   taskId: string;
   runId: string | null;
   stepId: string | null;
-  kind:
-    | "input"
-    | "selection"
-    | "confirmation"
-    | "approval"
-    | "result"
-    | "takeover"
-    | "progress"
-    | "error_recovery"
-    | "file_request"
-    | "authentication";
+  kind: InteractionKind;
   status: "pending" | "submitted" | "resolved" | "cancelled" | "expired";
   blocking: boolean;
   schema: Record<string, unknown> | null;
@@ -895,7 +941,7 @@ type InteractionResponse = {
   interactionId: string;
   taskId: string;
   userId: string;
-  action: "submit" | "select" | "approve" | "reject" | "edit" | "takeover" | "cancel";
+  action: InteractionAction;
   data: Record<string, unknown>;
   submittedAt: string;
 };
@@ -1477,6 +1523,8 @@ ToolDefinition 示例：
 
 ## 21. 分阶段落地
 
+Sequence A-E 覆盖产品 MVP 的设计依赖，但每项仍须服从对应 Phase 范围。Sequence F 明确属于 Post-MVP。HumanExecutor 在 Sequence E 只落实 contract 和主权区分，不落实真实团队人工工作流。
+
 ### Sequence A：Presentation 与 Interaction Contract
 
 - InteractionRequest。
@@ -1521,11 +1569,15 @@ ToolDefinition 示例：
 - Knowledge retrieval。
 - Clarification。
 - Approval。
+- `[MVP-CONTRACT]` HumanExecutor、Direct Human Routing 与 Human Takeover 的 invocation / Adapter / Interaction 语义；production 人工分派主路径暂缓。
+- Approval 与 HumanExecutor 的主权区分。
 - TaskResult。
 - Employee vs Direct Agent Test。
 - Executor Selection Accuracy。
 
 ### Sequence F：ExternalAgentExecutor / Hermes POC
+
+范围标记：`[POST-MVP-P5]`。
 
 - ExecutorRequest。
 - ExecutorEvent。
@@ -1555,6 +1607,8 @@ AI Employee Harness 支持方案必须遵守：
 - 禁止用户重复批准导致重复副作用。
 
 ## 23. 与现有文档关系
+
+- `MVP_SCOPE_AND_LONG_TERM_ROADMAP.md`：MVP Required、MVP Contract、Post-MVP 和 Deferred 的实施范围权威。
 
 本文档依赖以下权威文档：
 

@@ -1,10 +1,25 @@
 # AstraOS Task Presentation Contract
 
-更新时间：2026-07-15
+更新时间：2026-07-16
 
 本文档定义 Astra OS Managed Runtime 如何把任务执行语义转换为 Workspace 可展示、可交互、可恢复、可审计的用户交互语义。
 
 它不是前端组件规范，也不是 Hermes / Agent 内部 trace 规范。它是 Managed Runtime 的 Presentation Contract。
+
+## 0. 实施范围标记
+
+本文件定义长期稳定的 Presentation Boundary，但字段和 Interaction kind 按阶段落地，具体范围以 `MVP_SCOPE_AND_LONG_TERM_ROADMAP.md` 为准：
+
+| 内容 | 范围标记 |
+| --- | --- |
+| Workspace 用户状态、View Model 草案和隔离 Preview | `[MVP-P1]` |
+| Mock 闭环、Repository、Projector、OpenAPI / Pydantic / TypeScript 冻结 | `[MVP-P2]` |
+| 真实 context / recovery Interaction 与 Runtime 映射 | `[MVP-P3]` |
+| 真实单级 approval / result Interaction 与受治理写操作 | `[MVP-P4]` |
+| takeover 的统一语义和 View Model 可扩展性 | `[MVP-CONTRACT]` |
+| Human Work assignment UI、多人协作和企业审批体验 | `[DEFERRED]` |
+
+类型定义覆盖长期语义时，前端只需实现当前 Phase Gate 所需的 renderer。未进入当前 Gate 的 kind 可以保留枚举和映射规则，但不得以空按钮或假流程宣称功能已存在。
 
 ## 1. 定位
 
@@ -118,6 +133,27 @@ internal_only     只能留在 Runtime / Console / Audit
 `InteractionRequest` 是任务状态的一部分，不是临时 WebSocket 消息。
 
 ```ts
+type InteractionKind =
+  | "input"
+  | "selection"
+  | "confirmation"
+  | "approval"
+  | "result"
+  | "takeover"
+  | "progress"
+  | "error_recovery"
+  | "file_request"
+  | "authentication";
+
+type InteractionAction =
+  | "submit"
+  | "select"
+  | "approve"
+  | "reject"
+  | "edit"
+  | "takeover"
+  | "cancel";
+
 type InteractionRequest = {
   id: string;
   taskId: string;
@@ -156,7 +192,7 @@ type InteractionResponse = {
   interactionId: string;
   taskId: string;
   userId: string;
-  action: "submit" | "select" | "approve" | "reject" | "edit" | "takeover" | "cancel";
+  action: InteractionAction;
   data: Record<string, unknown>;
   submittedAt: string;
 };
@@ -171,20 +207,20 @@ type InteractionResponse = {
 
 ## 7. Interaction Kind Registry
 
-第一版支持这些通用类型：
+通用 Interaction Registry 覆盖以下类型；并非所有类型都在同一个 Phase 进入 production：
 
-| Kind | 用途 |
-| --- | --- |
-| `input` | 请求结构化信息。 |
-| `selection` | 请求用户选择候选项。 |
-| `confirmation` | 请求确认某个动作或理解。 |
-| `approval` | 请求批准高风险、外部副作用或受治理动作。 |
-| `result` | 展示结构化结果。 |
-| `takeover` | 请求监督或人工接管。 |
-| `progress` | 展示任务进度摘要。 |
-| `error_recovery` | 请求用户选择恢复方式。 |
-| `file_request` | 请求上传或选择文件。 |
-| `authentication` | 请求用户完成登录、授权或外部身份验证。 |
+| Kind | 用途 | 实施范围 |
+| --- | --- | --- |
+| `input` | 请求结构化信息。 | `[MVP-P1]` 样片、`[MVP-P2]` Mock；`[MVP-P3]` 真实 Runtime |
+| `selection` | 请求用户选择候选项。 | `[MVP-P1]`、`[MVP-P2]` |
+| `confirmation` | 请求确认某个动作或理解。 | `[MVP-P1]`、`[MVP-P2]` |
+| `approval` | 请求批准高风险、外部副作用或受治理动作。 | `[MVP-P1]` 样片、`[MVP-P2]` Mock；`[MVP-P4]` 真实治理 |
+| `result` | 展示结构化结果。 | `[MVP-P1]`、`[MVP-P2]` 契约；`[MVP-P3]`、`[MVP-P4]` 真实结果 |
+| `takeover` | 请求用户选择、确认或参与把当前 Task 从现有 Executor 升级给人工。直接人工路由不创建此 Interaction。 | `[MVP-CONTRACT]`；真实 Human Work 流程 `[DEFERRED]` |
+| `progress` | 展示任务进度摘要。 | `[MVP-P1]`、`[MVP-P2]` |
+| `error_recovery` | 请求用户选择恢复方式。 | `[MVP-P1]`、`[MVP-P2]` 契约；`[MVP-P3]` 真实恢复 |
+| `file_request` | 请求上传或选择文件。 | `[MVP-P1]`、`[MVP-P2]` 产品与契约；真实 Storage 接入按场景实施 |
+| `authentication` | 请求用户完成登录、授权或外部身份验证。 | `[MVP-CONTRACT]`；外部授权流程按需实施 |
 
 新增 kind 必须同时定义：
 
@@ -195,6 +231,8 @@ type InteractionResponse = {
 - Workspace View Model 映射。
 - 审计字段。
 - 过期和恢复规则。
+
+`takeover` 只描述需要用户参与的人工升级交互，不代表所有 HumanExecutor 路由。TaskDecision 从一开始就选择人工时，直接产生 `RuntimeInvocation(invocation_type = "human")`；策略自动触发且无需用户决定的运行中升级，也可以直接重新决策。`approval` 与 `takeover` 不得混用：人工批准原 Executor 的动作继续执行时仍属于 Approval，只有人工取得实际任务执行责任时才进入 HumanExecutor。
 
 ## 8. Schema-driven Rendering Contract
 
@@ -258,7 +296,7 @@ type InteractionOptionView = {
 };
 
 type InteractionActionView = {
-  action: "submit" | "select" | "approve" | "reject" | "edit" | "takeover" | "cancel";
+  action: InteractionAction;
   label: string;
   emphasis: "primary" | "secondary" | "danger";
 };
@@ -487,6 +525,7 @@ Runtime Adapter 根据能力决定：
 ## 15. 文档分工
 
 - `ARCHITECTURE_BASELINE.md` 定义 Interaction Runtime 的架构归属。
+- `MVP_SCOPE_AND_LONG_TERM_ROADMAP.md` 定义各 Interaction kind 和相关业务能力何时进入 MVP、Post-MVP 或 Deferred。
 - `RUNTIME_REMEDIATION_SPEC.md` 定义 InteractionRequest、InteractionResponse、暂停恢复、状态机、可见性和审计的工程要求。
 - `PHASED_ENGINEERING_DELIVERY_PLAN.md` 定义 Task Presentation Contract 的交付阶段。
 - `WORKSPACE_VISUAL_BASELINE.md` 定义 Workspace 只渲染 Presentation View，不展示 executor trace。

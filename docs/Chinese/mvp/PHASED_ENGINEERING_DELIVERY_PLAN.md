@@ -6,18 +6,18 @@
 
 当前所有旧实现、旧 Preview、旧启动文案和旧 Phase 标记都视为重构前遗留资产。它们可以被盘点、复用或删除，但不能作为新 Phase 已完成的证据。
 
-主架构以 `ARCHITECTURE_BASELINE.md` 为准。任务展示语义以 `TASK_PRESENTATION_CONTRACT.md` 为准。Runtime 规格以 `RUNTIME_REMEDIATION_SPEC.md` 为准。Workspace 视觉边界以 `WORKSPACE_VISUAL_BASELINE.md` 为准。本文件只定义阶段、依赖关系、交付物和验收 Gate。
+主架构以 `ARCHITECTURE_BASELINE.md` 为准。MVP 与长期能力的实施深度以 `MVP_SCOPE_AND_LONG_TERM_ROADMAP.md` 为准。任务展示语义以 `TASK_PRESENTATION_CONTRACT.md` 为准。Runtime 规格以 `RUNTIME_REMEDIATION_SPEC.md` 为准。Workspace 视觉边界以 `WORKSPACE_VISUAL_BASELINE.md` 为准。本文件只定义阶段、依赖关系、交付物和验收 Gate。
 
 ## 1. 当前状态
 
 | Phase | 状态 | 说明 |
 | --- | --- | --- |
-| Phase 0 | `accepted` | Gate 0 纠偏后重新验收通过；记录见 `phase-acceptance/GATE_0_REACCEPTANCE.md` |
+| Phase 0 | `accepted` | Gate 0 纠偏后重新验收通过；正式记录见 `phase-acceptance/GATE_0_REACCEPTANCE.md`，后续补充一致性审计见 `phase-acceptance/GATE_0_SUPPLEMENTAL_CONSISTENCY_AUDIT.md` |
 | Phase 1 | `not_started` | Gate 0 已重新通过，等待正式启动 Workspace 产品形态与语义契约草案 |
 | Phase 2 | `blocked` | 等待 Phase 1 验收 |
 | Phase 3 | `blocked` | 等待 Phase 2 验收 |
 | Phase 4 | `blocked` | 等待 Phase 3 验收 |
-| Phase 5 | `blocked` | 等待 Phase 4 验收 |
+| Phase 5 | `blocked` | Post-MVP；等待 Gate 4 accepted 后再决定是否启动 External Agent POC |
 
 阶段状态只能使用：
 
@@ -88,7 +88,7 @@ Presentation Contract 在 Phase 1 形成草案，在 Phase 2 经过 Mock 闭环�
 - 所有真实执行至少生成基础审计事件。
 - 重试和用户重复提交不能重复产生副作用。
 
-Phase 4 会把这些能力扩展为完整企业治理，但 Phase 3 不允许绕过最低安全边界。
+Phase 4 会把这些能力扩展为第一个业务场景的闭环治理，但不建设通用企业治理平台；Phase 3 仍不允许绕过最低安全边界。
 
 ### 2.5 Mock 与正式实现隔离
 
@@ -109,6 +109,12 @@ Governance 内部模块
 Executor Adapter
 ```
 
+### 2.7 MVP Exit 与范围标记
+
+产品 MVP 在 Gate 4 accepted 时完成。Phase 5 是基于真实业务基线开展的 Post-MVP POC 和生产加固，不是 MVP 上线前置条件。
+
+本文档中的能力实施范围统一使用 `MVP_SCOPE_AND_LONG_TERM_ROADMAP.md` 定义的 `[CURRENT]`、`[MVP-P1]` 至 `[MVP-P4]`、`[MVP-CONTRACT]`、`[POST-MVP-P5]`、`[DEFERRED]` 和 `[PROHIBITED]` 标记。架构或 Runtime 文档中出现某个对象，不自动把它加入当前 Phase backlog。
+
 ## 3. 总体交付顺序
 
 ```text
@@ -117,7 +123,8 @@ Phase 0  Rebuild Baseline
   -> Phase 2  Mock Product Loop + Engineering Contract Freeze
   -> Phase 3  Real Runtime Vertical Slice
   -> Phase 4  Governed Write + First Employee Loop
-  -> Phase 5  External Agent POC + Production Hardening
+  -> MVP Exit（Gate 4 accepted）
+  -> Phase 5  Post-MVP External Agent POC + Production Hardening
 ```
 
 每个 Phase 只有一个主 Gate：
@@ -154,6 +161,7 @@ Phase 0 不是单纯的文档整理。它必须消除会误导后续开发的旧
 
 ```text
 ARCHITECTURE_BASELINE.md
+  -> MVP_SCOPE_AND_LONG_TERM_ROADMAP.md
   -> TASK_PRESENTATION_CONTRACT.md
   -> RUNTIME_REMEDIATION_SPEC.md
   -> WORKSPACE_VISUAL_BASELINE.md
@@ -163,6 +171,7 @@ ARCHITECTURE_BASELINE.md
 领域边界：
 
 - 架构层级、主权和禁止越权：`ARCHITECTURE_BASELINE.md`。
+- MVP、Post-MVP 和 Deferred 实施范围：`MVP_SCOPE_AND_LONG_TERM_ROADMAP.md`。
 - Runtime 到 Workspace 的用户交互语义：`TASK_PRESENTATION_CONTRACT.md`。
 - Runtime 状态机、数据对象、治理与 Executor Adapter：`RUNTIME_REMEDIATION_SPEC.md`。
 - Workspace 视觉和交互边界：`WORKSPACE_VISUAL_BASELINE.md`。
@@ -609,7 +618,7 @@ ExternalAgentExecutor 和 WorkflowExecutor 只定义稳定接口，不接入 pro
   -> 返回 TaskResult
 ```
 
-### 8.2 完整治理
+### 8.2 首个闭环治理
 
 本阶段实现：
 
@@ -618,9 +627,9 @@ ExternalAgentExecutor 和 WorkflowExecutor 只定义稳定接口，不接入 pro
 - Idempotency。
 - Retry 和 timeout。
 - Pause / resume。
-- 完整 Audit。
-- 失败 reconciliation；必要时定义 compensation。
-- Human takeover 的最小入口。
+- 覆盖当前业务闭环的 Audit。
+- 场景级 failure reconciliation；只有出现部分副作用时才定义对应 compensation。
+- `[MVP-CONTRACT]` HumanExecutor、Direct Human Routing、Human Takeover 和 Approval 的接口与主权边界；不实现真实人工分派、认领、执行和结果回收主路径。
 
 安全要求：
 
@@ -648,12 +657,13 @@ Employee Package 至少定义：
 - outcome contract。
 - version。
 
-本阶段允许的逻辑 Executor 选择：
+本阶段的 production 默认逻辑 Executor：
 
 ```text
 direct_model_runtime
-human_executor
 ```
+
+`human_executor` 保留在 Execution Profile、RuntimeInvocation taxonomy 和 Runtime Adapter contract 中，但在 MVP Exit 前不作为 production 默认路径。Direct Human Routing 从 TaskDecision 直接产生 `RuntimeInvocation(invocation_type = human)`；Human Takeover 由既有 Executor 在运行中升级，并在需要用户参与时通过 `InteractionRequest(kind = takeover)` 承接。人工只批准 Tool / Workflow / Agent 动作继续执行时仍属于 Approval，不应改写为 HumanExecutor。真实 Human Work assignment、claim、reassign、SLA 和结果回收属于 `[DEFERRED]`。
 
 `tool_action` 是由 `ToolActionExecutor` 承接的单次受治理调用类型，不是与 Direct Model Runtime、Workflow Runtime、Agent Runtime 或 Human Executor 并列的逻辑 Executor。`agent_runtime` 可以保留在 Execution Profile schema 中，但在 Phase 5 验证前不作为生产默认路径。
 
@@ -666,13 +676,15 @@ human_executor
 - Employee 没有复制 Agent loop，也没有绕过 Managed Runtime。
 - 有可记录的业务基线：成功率、人工介入率、恢复率、时延和成本。
 
-## 9. Phase 5：External Agent Runtime POC 与生产加固
+## 9. Phase 5：Post-MVP External Agent Runtime POC 与生产加固
 
 ### 9.1 目标
 
 基于 Phase 4 的真实业务基线，验证 Hermes 等 External Agent Runtime 是否能在受控边界内提升复杂任务完成率，并判断收益是否覆盖额外成本和风险。
 
 Phase 5 不以“成功接通 Hermes API”为完成标准，而以可对照的业务收益为完成标准。
+
+范围标记：`[POST-MVP-P5]`。Gate 4 accepted 已构成产品 MVP Exit；不启动或未完成 Phase 5 不影响 MVP 成立。
 
 #### 本 Phase 参考文档
 
@@ -752,8 +764,8 @@ Employee + External Agent Runtime
 | Phase 1 | Workspace 产品形态和语义契约草案覆盖完整任务体验 | Runtime 对象成为普通用户 UI |
 | Phase 2 | Mock 产品闭环完成，Presentation Boundary（Repository、Projector、View Model、OpenAPI）正式冻结 | 未验证便冻结、production import mock 或组件消费 Runtime DTO |
 | Phase 3 | 真实 Runtime 完成问答、追问、恢复和只读 Tool 纵向切片 | 无 operation identity、无审计或可执行写操作 |
-| Phase 4 | Customer Support Employee 完成受治理写操作闭环 | 审批前副作用、重复写入或 Employee 复制 Agent loop |
-| Phase 5 | External Agent 在真实业务基线上证明额外收益并完成生产加固 | Hermes 绕过 Managed Runtime 或 Governance |
+| Phase 4 | Customer Support Employee 完成受治理写操作闭环并达到 MVP Exit | 审批前副作用、重复写入或 Employee 复制 Agent loop |
+| Phase 5 | Post-MVP：External Agent 在真实业务基线上证明额外收益并完成生产加固 | Hermes 绕过 Managed Runtime 或 Governance |
 
 ## 11. Milestones
 
@@ -771,9 +783,9 @@ Milestone D：Runtime Vertical Slice
   Gate 3 accepted。
 
 Milestone E：First Governed Employee
-  Gate 4 accepted。
+  Gate 4 accepted；产品 MVP Exit。
 
-Milestone F：External Agent Production Candidate
+Milestone F：Post-MVP External Agent Production Candidate
   Gate 5 accepted。
 ```
 
@@ -793,6 +805,7 @@ Milestone F：External Agent Production Candidate
 ## 13. 文档维护要求
 
 - Phase 状态或交付顺序变化时，优先更新本文件。
+- MVP / Post-MVP / Deferred 范围或实施深度变化时，同步更新 `MVP_SCOPE_AND_LONG_TERM_ROADMAP.md`。
 - 主架构变化时，同步更新 `ARCHITECTURE_BASELINE.md`。
 - 用户交互语义变化时，同步更新 `TASK_PRESENTATION_CONTRACT.md`。
 - Runtime 对象、状态机或治理不变量变化时，同步更新 `RUNTIME_REMEDIATION_SPEC.md`。
