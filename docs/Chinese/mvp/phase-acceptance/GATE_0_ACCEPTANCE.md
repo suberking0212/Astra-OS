@@ -52,13 +52,17 @@
 
 以下项目不阻塞 Gate 0，但必须在后续阶段持续治理：
 
-1. 当前没有 CI 自动执行 baseline、lint、typecheck、build 和 pytest；现阶段证据来自本地固定 commit 验证。
-2. `apps/web/src/styles/globals.css` 体积较大，Workspace 组件和样式需要在 Phase 1 模块化。
-3. Preview 的 View 类型仍位于 Mock fixture；Phase 1 应迁移到正式 Presentation contract 目录，Mock 与正式实现只共同依赖公开类型。
-4. 数据库存储对象仍命名为 `projects`，产品语义使用 Workspace；Phase 0 决定保留表并明确映射，不做破坏性重命名。
-5. Python 3.12 测试存在 `passlib` 对 `crypt` 的弃用警告；进入生产候选前需要升级密码哈希实现或明确 Python 版本策略。
-6. `scripts/dev.sh` 的端口兜底清理会终止占用配置端口的进程；开发者应使用自定义 `API_PORT` / `WEB_PORT` 避免影响无关服务。
-7. 首次并行验收中 Next.js 遇到一次 `.next` 内部缓存不一致；删除构建缓存后重跑通过。CI 应从干净 checkout/build cache 开始。
+| ID | 技术债务 | 预期处理阶段 | 完成标准 | Gate 约束 |
+| --- | --- | --- | --- | --- |
+| TD-01 | 当前没有 CI 自动执行 baseline、lint、typecheck、build 和 pytest；现阶段证据来自本地固定 commit 验证 | Phase 1 | CI 在干净 checkout 上自动执行五类检查，失败时阻止合并；Phase 2 再加入 contract tests | Gate 1 前完成基础 CI；Gate 2 前补齐 contract tests |
+| TD-02 | `apps/web/src/styles/globals.css` 体积较大，Workspace 组件和样式耦合 | Phase 1 | Task Composer、Active Task、Needs Attention、Interaction、Result/History 的组件和样式边界完成拆分，不再继续向单一全局文件堆叠 Workspace 状态样式 | Gate 1 前完成 |
+| TD-03 | Preview 的 View 类型仍位于 Mock fixture | Phase 1 | View Model 草案迁移到正式 `features/workspace/contract`，Preview/Mock 与正式组件只共同依赖公开 contract types；Phase 2 再验证并冻结字段 | Gate 1 前完成类型迁移；Gate 2 前完成契约冻结 |
+| TD-04 | 数据库存储对象命名为 `projects`，产品语义使用 Workspace | Phase 2 决策；必要时 Phase 3 迁移 | Gate 2 冻结 API 前明确 `project` 与 `workspace` 的长期映射和兼容规则；若决定改表，通过 Phase 3 前置 Alembic revision 迁移，不直接修改基线 revision | Gate 2 前必须完成命名决策；若需迁移则阻塞 Phase 3 正式实现 |
+| TD-05 | Python 3.12 测试存在 `passlib` 对 `crypt` 的弃用警告，Python 3.13 支持边界不清晰 | Phase 1 | 升级/替换密码哈希依赖，或在 `pyproject.toml`、启动脚本和 README 中统一声明并自动校验受支持 Python 版本；测试不再依赖即将移除的标准库能力 | 最迟 Gate 3 前完成；目标在 Gate 1 前清理 |
+| TD-06 | `scripts/dev.sh` 的端口兜底清理可能终止占用相同端口的无关进程 | Phase 1 | 优先只清理由 AstraOS PID 文件和命令特征确认的进程；遇到无法确认归属的端口占用时给出诊断并退出，除非用户显式开启强制清理 | 不单独阻塞 Gate 1，但必须在 Gate 2 前完成 |
+| TD-07 | Next.js 曾出现一次 `.next` 内部缓存不一致，清理缓存后重跑通过 | Phase 1 | TD-01 的 CI 从干净构建目录连续稳定通过；本地 build 命令或脚本明确处理损坏缓存，不依赖人工判断 | Gate 1 前完成并通过 CI 证明 |
+
+债务治理规则：对应 Gate 标记为“必须完成”的项目未关闭时，该 Gate 不得 `accepted`；债务延期必须在新的 Gate 验收记录中说明原因、风险和新的最晚处理阶段，不能静默后移。
 
 ## 6. 架构、契约与数据影响
 
