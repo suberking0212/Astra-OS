@@ -172,4 +172,6 @@ projects
 
 ## 8. Gate 0 当前状态
 
-Phase 0 的工程交付物已在工作树落实，但按照阶段计划，正式 `accepted` 还需要：对应 commit、逐项证据链接、测试结果、已知限制和明确验收结论。当前 Phase 0 保持 `in_progress`，Phase 1 保持 `blocked`；不得用本文档、Preview 或代码常量单独宣称 Gate 0 已通过。
+Phase 0 已在实现 commit `d1c3e21f686c292a05988d2b48595bc81eb41504` 上完成验证并通过 Gate 0。正式验收记录位于 `phase-acceptance/GATE_0_ACCEPTANCE.md`。
+
+Phase 0 状态为 `accepted`，Phase 1 已解除阻塞并回到 `not_started`。后续状态仍只能由 `PHASED_ENGINEERING_DELIVERY_PLAN.md` 和对应正式验收记录证明；本文档、Preview 或代码常量不能单独证明 Phase 状态。

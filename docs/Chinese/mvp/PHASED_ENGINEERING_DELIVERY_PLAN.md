@@ -12,8 +12,8 @@
 
 | Phase | 状态 | 说明 |
 | --- | --- | --- |
-| Phase 0 | `in_progress` | 工程基线与资产处置已落实，等待 Gate 0 对应 commit 和正式验收记录 |
-| Phase 1 | `blocked` | 等待 Phase 0 验收 |
+| Phase 0 | `accepted` | Gate 0 已通过；验收记录见 `phase-acceptance/GATE_0_ACCEPTANCE.md` |
+| Phase 1 | `not_started` | Gate 0 已通过，等待正式启动 Workspace 产品形态与语义契约草案 |
 | Phase 2 | `blocked` | 等待 Phase 1 验收 |
 | Phase 3 | `blocked` | 等待 Phase 2 验收 |
 | Phase 4 | `blocked` | 等待 Phase 3 验收 |
