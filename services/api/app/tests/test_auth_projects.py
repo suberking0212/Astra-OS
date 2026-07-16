@@ -1,6 +1,6 @@
 from sqlalchemy import select
 
-from app.db.models import EmailVerificationCode, Project, User
+from app.db.models import EmailVerificationCode, User
 from app.db.session import AsyncSessionLocal
 
 
@@ -136,48 +136,3 @@ async def test_resend_email_verification_respects_cooldown(client, prevent_real_
     response = await client.post("/auth/email/resend", json={"email": "verify@example.com"})
 
     assert response.status_code == 429
-
-
-async def test_create_project_success_and_owner_persisted(client):
-    headers = await auth_headers(client)
-    response = await client.post(
-        "/projects",
-        headers=headers,
-        json={"name": "Support Operations", "description": "Customer support workspace"},
-    )
-
-    assert response.status_code == 201
-    body = response.json()
-    assert body["name"] == "Support Operations"
-    assert body["owner_user_id"]
-
-    async with AsyncSessionLocal() as session:
-        result = await session.execute(select(Project).where(Project.id == body["id"]))
-        project = result.scalar_one()
-        assert str(project.owner_user_id) == body["owner_user_id"]
-
-
-async def test_project_list_only_returns_current_users_projects(client):
-    owner_headers = await auth_headers(client, email="owner@example.com")
-    other_headers = await auth_headers(client, email="other@example.com")
-
-    await client.post("/projects", headers=owner_headers, json={"name": "Owner Project"})
-    await client.post("/projects", headers=other_headers, json={"name": "Other Project"})
-
-    response = await client.get("/projects", headers=owner_headers)
-
-    assert response.status_code == 200
-    projects = response.json()
-    assert len(projects) == 1
-    assert projects[0]["name"] == "Owner Project"
-
-
-async def test_user_cannot_access_another_users_project(client):
-    owner_headers = await auth_headers(client, email="owner@example.com")
-    other_headers = await auth_headers(client, email="other@example.com")
-    created = await client.post("/projects", headers=owner_headers, json={"name": "Private Project"})
-    project_id = created.json()["id"]
-
-    response = await client.get(f"/projects/{project_id}", headers=other_headers)
-
-    assert response.status_code == 404

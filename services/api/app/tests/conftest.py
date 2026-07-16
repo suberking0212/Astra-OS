@@ -54,7 +54,7 @@ async def _ensure_test_database() -> None:
 
 asyncio.run(_ensure_test_database())
 
-from app.db.models import Base, EmailVerificationCode, Project, User  # noqa: E402
+from app.db.models import Base, EmailVerificationCode, User  # noqa: E402
 from app.db.session import engine  # noqa: E402
 from app.main import app  # noqa: E402
 
@@ -74,7 +74,6 @@ async def clean_database():
     async def clean() -> None:
         async with engine.begin() as connection:
             await connection.execute(delete(EmailVerificationCode))
-            await connection.execute(delete(Project))
             await connection.execute(delete(User))
 
     await clean()

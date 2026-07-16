@@ -50,9 +50,9 @@ Phase 5 的 External Agent Runtime / Hermes POC 与生产加固属于 MVP 后验
 当前 production 基线为 `[CURRENT]`：
 
 - 注册、登录、邮箱验证和 JWT Session。
-- owner-scoped Workspace 创建、列表和详情；数据库实体仍命名为 `projects`。
-- PostgreSQL 中的 `users`、`email_verification_codes`、`projects`。
-- 正式 Workspace 只读取 Auth / Project API，并明确显示 Task capability unavailable。
+- 单一 `/workspace` shell 入口。
+- PostgreSQL 中的 `users`、`email_verification_codes`。
+- 正式 Workspace 只读取 Auth API，并明确显示 Task capability unavailable。
 - Preview 与 production 数据源隔离，默认关闭。
 - 文档、工程和 Mock 边界自动检查。
 

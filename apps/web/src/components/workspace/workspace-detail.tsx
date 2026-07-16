@@ -10,25 +10,16 @@ import {
   Sparkles,
 } from "lucide-react";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
-import {
-  ApiError,
-  getMe,
-  getProject,
-  type AuthUser,
-  type Project,
-} from "@/lib/api-client";
+import { ApiError, getMe, type AuthUser } from "@/lib/api-client";
 import { clearStoredSession, getStoredSession, saveSession } from "@/lib/auth";
 import { routes } from "@/lib/routes";
 
 export function WorkspaceDetail() {
   const router = useRouter();
-  const params = useParams<{ workspaceId: string }>();
-  const workspaceId = params.workspaceId;
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [project, setProject] = useState<Project | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -53,12 +44,8 @@ export function WorkspaceDetail() {
       setIsLoading(true);
       setError(null);
       try {
-        const [currentUser, currentProject] = await Promise.all([
-          getMe(activeToken),
-          getProject(activeToken, workspaceId),
-        ]);
+        const currentUser = await getMe(activeToken);
         setUser(currentUser);
-        setProject(currentProject);
         saveSession({ accessToken: activeToken, user: currentUser });
       } catch (err) {
         if (!handleUnauthorized(err)) {
@@ -70,7 +57,7 @@ export function WorkspaceDetail() {
     }
 
     void load();
-  }, [handleUnauthorized, router, workspaceId]);
+  }, [handleUnauthorized, router]);
 
   function signOut() {
     clearStoredSession();
@@ -95,14 +82,9 @@ export function WorkspaceDetail() {
             <p className="agent-section-label">Current workspace</p>
             <div className="agent-task-item">
               <Brain className="icon" aria-hidden="true" />
-              <span className="agent-task-item-text">{project?.name ?? "Workspace"}</span>
+              <span className="agent-task-item-text">Astra Workspace</span>
             </div>
           </div>
-
-          <Link className="agent-new-task" href={routes.workspace}>
-            Workspaces
-            <Plus className="icon" aria-hidden="true" />
-          </Link>
 
           <div className="agent-profile">
             <div className="agent-profile-main">
@@ -119,12 +101,12 @@ export function WorkspaceDetail() {
           <header className="agent-work-top">
             <div className="agent-task-title" id="workspace-title">
               <Brain className="icon" aria-hidden="true" />
-              {project?.name ?? "Astra Workspace"}
+              Astra Workspace
             </div>
             <div className="agent-top-actions">
               <div className="agent-credit-pill" aria-label="Workspace status">
                 <Clock3 className="icon" aria-hidden="true" />
-                Workspace ready
+                Workspace shell
               </div>
             </div>
           </header>
@@ -149,11 +131,11 @@ export function WorkspaceDetail() {
                     </div>
                     <div className="agent-thinking-body">
                       <p>
-                        This production workspace currently reads only authenticated account and workspace data.
-                        Task submission, interactions, progress, and results will be connected through the formal
-                        Workspace presentation contract in the next delivery phases.
+                        This production workspace is currently a single entry shell. Task submission, interactions,
+                        progress, and results will be connected through the formal Workspace presentation contract in
+                        the next delivery phases.
                       </p>
-                      {project?.description ? <p>{project.description}</p> : null}
+                      <p>You are signed in and ready to continue once the task surface is connected.</p>
                     </div>
                   </div>
                 </div>

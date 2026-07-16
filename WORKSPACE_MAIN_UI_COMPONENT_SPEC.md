@@ -14,7 +14,7 @@
 
 ## 1. 当前真实状态
 
-当前正式 Workspace 只读取 Auth 和 Project API。详情页显示 Workspace 身份、明确的 Task unavailable 状态和禁用的 Task Composer。
+当前正式 Workspace 只读取 Auth API。正式入口显示单一 Workspace 身份、明确的 Task unavailable 状态和禁用的 Task Composer。
 
 正式页面当前不具备：
 

@@ -38,19 +38,19 @@ ARCHITECTURE_BASELINE.md
 
 | 类别 | 当前真实位置 | 说明 |
 | --- | --- | --- |
-| Web 入口 | `apps/web/src/app` | Next.js App Router；正式入口为 `/login`、`/verify-email`、`/workspace`、`/workspace/{workspaceId}` |
-| 正式 Workspace | `apps/web/src/components/workspace/workspace-launcher.tsx`、`workspace-detail.tsx` | 只读取 Auth 与 Project API；没有 Task、Runtime 或本地 demo 数据源 |
+| Web 入口 | `apps/web/src/app` | Next.js App Router；正式入口为 `/login`、`/verify-email`、`/workspace` |
+| 正式 Workspace | `apps/web/src/components/workspace/workspace-detail.tsx` | 只读取 Auth API，并渲染单一 Workspace shell；没有 Task、Runtime 或本地 demo 数据源 |
 | 正式 Web 数据源 | `apps/web/src/lib/api-client.ts` | `NEXT_PUBLIC_API_BASE_URL` 指向 FastAPI；没有 mock 选择分支 |
 | Preview | `apps/web/src/app/(workspace)/workspace/phase1-preview` | 只引用 `apps/web/src/mock`；`ENABLE_WORKSPACE_PREVIEWS=true` 时才可访问，默认 404 |
-| API 入口 | `services/api/app/main.py` | FastAPI；当前仅挂载 Auth、Projects 和 Health |
-| 正式 API 业务模块 | `services/api/app/modules/auth`、`modules/projects` | 认证、邮箱验证和 owner-scoped workspace ownership |
-| 正式数据库模型 | `services/api/app/db/models.py` | `users`、`email_verification_codes`、`projects` |
-| 数据迁移 | `services/api/alembic/versions/20260714_0001_rebuild_auth_workspace_baseline.py` | 新基线首个 Alembic revision，无旧 Runtime schema 继承 |
+| API 入口 | `services/api/app/main.py` | FastAPI；当前仅挂载 Auth 和 Health |
+| 正式 API 业务模块 | `services/api/app/modules/auth` | 认证与邮箱验证 |
+| 正式数据库模型 | `services/api/app/db/models.py` | `users`、`email_verification_codes` |
+| 数据迁移 | `services/api/alembic/versions/20260714_0001_rebuild_auth_workspace_baseline.py`、`20260716_0002_remove_projects_workspace_container.py` | 新基线首个 Alembic revision 建立 Auth 基线；后续 revision 删除脱节的 `projects` 容器表 |
 | Shared package | `packages/shared` | 保留为空的公开共享边界；不得存放 Phase 状态；Phase 2 才冻结正式共享契约 |
 | 本地启动 | `scripts/dev.sh` | 启动 PostgreSQL 与 Qdrant、执行 Alembic、启动 FastAPI 与 Next.js；只公布真实存在的入口 |
 | Phase 状态 | `PHASED_ENGINEERING_DELIVERY_PLAN.md` 第 1 节 | 唯一阶段状态来源 |
 
-明确回答：当前真实入口是 Workspace 路由与 FastAPI Auth/Projects 路由；真实数据源是 PostgreSQL 中的新 `users`、`email_verification_codes`、`projects` 表；当前尚无正式 Task Presentation API 契约，Phase 1 只形成语义草案，Phase 2 验证后才冻结 OpenAPI/Pydantic/TypeScript 契约。
+明确回答：当前真实入口是 Workspace 路由与 FastAPI Auth 路由；真实数据源是 PostgreSQL 中的 `users`、`email_verification_codes` 表；当前尚无正式 Task Presentation API 契约，Phase 1 只形成语义草案，Phase 2 验证后才冻结 OpenAPI/Pydantic/TypeScript 契约。
 
 ## 3. 目录与依赖边界
 
@@ -93,9 +93,8 @@ packages/shared
 | --- | --- |
 | Auth 页面、Auth Provider、session hook、JWT/security、邮箱验证与 SMTP adapter | 已形成真实纵向能力，边界与新架构不冲突 |
 | `users`、`email_verification_codes` | 新账号基线，可直接复用 |
-| `projects` 模型、route、service、schemas | 作为 owner-scoped Workspace ownership 持久化基线保留；Task contract 使用 `workspace_id` 不要求立即改表名 |
-| Workspace launcher/detail 的认证、项目加载、导航和视觉骨架 | 真实连接 Auth/Project API，可作为 Phase 1 产品结构起点 |
-| `api-client.ts` 中 Auth、Health、Project client | 当前真实 API client |
+| Workspace detail 的认证、导航和视觉骨架 | 当前真实 Workspace shell，可作为 Phase 1 产品结构起点 |
+| `api-client.ts` 中 Auth、Health client | 当前真实 API client |
 | `infra/docker-compose.yml`、Alembic、测试设施、`scripts/dev.sh` | 当前本地工程运行基线 |
 | 主架构、Presentation、Runtime、视觉和分阶段计划五份权威文档 | 新基线权威来源 |
 
@@ -104,6 +103,7 @@ packages/shared
 | 资产 | 迁移结论 |
 | --- | --- |
 | `apps/web/src/components/workspace/workspace-detail.tsx` 的本地 task/demo 状态 | 已从正式页面移除；Phase 1 只能通过正式 View Model props 或隔离 Preview 表达任务状态 |
+| `/workspace/[workspaceId]` 动态入口 | 已收口删除，避免继续暴露旧容器管理语义 |
 | `apps/web/src/lib/api-client.ts` 的 planned action mapping | 已删除，避免不存在的 endpoint 被当作契约；Phase 2 由验证后的 OpenAPI 重新生成/实现 |
 | `packages/shared` | 保留包边界，移除 Phase 常量；Phase 2 再承载冻结后的公开 contract types |
 | `apps/web/src/components/workspace/assistant-rich-content.tsx` | 可作为通用结果内容 renderer 候选，Phase 1 必须在 View Model/组件边界下复核后接入 |
@@ -127,6 +127,8 @@ packages/shared
 | `ASTRAOS_PHASE` 代码常量 | 已删除；Phase 状态只能来自阶段计划和验收记录 |
 | 后端包、route namespace 中的旧 Phase 0 文案 | 已删除 |
 | 启动脚本中不存在的 Admin/Knowledge/AI Employee URL | 已删除 |
+| `projects` route / service / schema / API client | 已删除，避免继续暴露与当前 Phase 目标脱节的 Workspace 容器管理能力 |
+| `workspace-launcher.tsx` 与 `/workspace/{workspaceId}` 正式入口 | 已删除，正式入口收口为单一 `/workspace` shell |
 | 正式 Workspace 中的 `task_local_*`、本地 submit、硬编码 timeline、assistant demo response | 已删除；若需要样片，只能放入 Preview/fixture |
 | API client 中尚未实现的旧 Task/Approval/Context/Result 路由映射 | 已删除，避免形成隐式契约 |
 
@@ -137,16 +139,14 @@ packages/shared
 ```text
 users
 email_verification_codes
-projects
 ```
 
 策略：
 
-- `20260714_0001` 是重构后首个 Alembic revision，允许在空数据库直接建立新基线。
-- 只允许复用这三个由该 revision 明确定义的表；任何重构前的 Task、Run、Workflow、Step、ToolCall、Approval、Permission、Audit 或 Executor 表都不进入新 Runtime 主路径。
+- `20260714_0001` 是重构后首个 Alembic revision，建立 Auth 基线；`20260716_0002` 删除与当前正式 Workspace 入口脱节的 `projects` 容器表。
+- 只允许复用当前基线中的 `users`、`email_verification_codes` 表；任何重构前的 Task、Run、Workflow、Step、ToolCall、Approval、Permission、Audit 或 Executor 表都不进入新 Runtime 主路径。
 - 本地/测试环境若仍有旧 schema，使用独立数据库或经人工确认后重建；迁移脚本不得静默删除未知旧表。
 - 需要保留的真实旧业务数据必须先导出、映射到未来新 schema，并通过单独、可审计的迁移 revision 导入；禁止直接让新 ORM 绑定旧 Runtime 表。
-- `projects` 在数据库中继续作为 Workspace ownership 容器。Presentation/API 语义可使用 workspace，但 Phase 0 不做破坏性表重命名。
 - Phase 3 新增 Runtime 表时只能通过新的 Alembic revision，并记录 operation identity、恢复与审计要求；不得修改 `20260714_0001` 的历史含义。
 
 ## 6. 旧阶段标记清理清单

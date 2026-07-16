@@ -10,7 +10,7 @@ Runtime 到 Workspace 的展示与交互契约以 `TASK_PRESENTATION_CONTRACT.md
 
 具体实施时间以 `MVP_SCOPE_AND_LONG_TERM_ROADMAP.md` 为准：
 
-- `[CURRENT]`：登录、邮箱验证、Workspace 列表/详情骨架和明确的 Task unavailable 状态。
+- `[CURRENT]`：登录、邮箱验证、单一 Workspace shell 和明确的 Task unavailable 状态。
 - `[MVP-P1]`：Task Composer、Active Task、Needs Attention、Result / History 产品形态和隔离 Preview。
 - `[MVP-P2]`：通用 Interaction Renderer、Repository / View Model 接入和完整 Mock 闭环。
 - `[MVP-P3]`：真实 context、progress、error recovery 和 TaskResult 状态。
@@ -38,7 +38,7 @@ Workspace 的目标是让用户委托任务、确认权限、补充上下文、�
 
 - Workspace 作为第一入口。
 - 沉浸式、专注、任务委托式界面气质。
-- 登录、邮箱验证、工作区列表、工作区详情的视觉骨架。
+- 登录、邮箱验证、单一 Workspace 入口的视觉骨架。
 - 任务输入区、等待态、按钮映射区、结果区的布局位置。
 - 用户可理解的任务状态、权限说明、审批卡片和结果交付区域。
 - 通用 Interaction Renderer，用于渲染输入、选择、确认、审批、结果、接管、进度、失败恢复、文件请求和授权交接。
@@ -58,7 +58,7 @@ Workspace 目前只连接：
 
 - 注册 / 登录 / 邮箱验证。
 - 当前账号。
-- 工作区创建 / 列表 / 详情。
+- 单一 `/workspace` 入口 shell。
 
 Workspace 详情页当前只展示明确的 Task capability unavailable 状态和禁用的 Task Composer，不模拟任务提交、审批、上下文请求或结果：
 

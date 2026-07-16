@@ -10,7 +10,7 @@
 
 | 内容 | 范围标记 |
 | --- | --- |
-| 当前 Auth、owner-scoped Workspace、三表数据基线 | `[CURRENT]` |
+| 当前 Auth、单一 Workspace shell、双表数据基线 | `[CURRENT]` |
 | Workspace / Presentation 产品边界 | `[MVP-P1]`、`[MVP-P2]` |
 | Managed Runtime、Interaction、只读 Tool 最小纵向切片 | `[MVP-P3]` |
 | 单级 Approval、幂等写操作、第一个 Customer Support Employee | `[MVP-P4]` |

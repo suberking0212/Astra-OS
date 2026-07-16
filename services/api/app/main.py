@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
-from app.api.routes import auth, projects
+from app.api.routes import auth
 from app.core.config import settings
 from app.db.session import engine
 
@@ -20,7 +20,7 @@ async def check_postgres() -> dict[str, Any]:
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(_app: FastAPI):
     yield
     await engine.dispose()
 
@@ -28,7 +28,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="AstraOS API",
     version="0.1.0",
-    description="AstraOS rebuild baseline API with Auth, Email Verification, and Workspaces.",
+    description="AstraOS rebuild baseline API with Auth, Email Verification, and a single Workspace shell.",
     lifespan=lifespan,
 )
 
@@ -41,7 +41,6 @@ app.add_middleware(
 )
 
 app.include_router(auth.router)
-app.include_router(projects.router)
 
 
 @app.get("/health", tags=["system"])

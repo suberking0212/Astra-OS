@@ -8,8 +8,7 @@ AI Employee is an enterprise business responsibility and governance object defin
 
 - JWT authentication
 - Registration, login, email verification, and account identity
-- Owner-scoped workspaces backed by `projects`
-- Workspace frontend shell backed only by the Auth and Project APIs
+- A single Workspace shell entry backed only by the Auth API
 - Preview assets isolated from production and disabled by default
 
 Task execution, Interaction Runtime, Presentation View Models, and Executors are not part of the current production path.

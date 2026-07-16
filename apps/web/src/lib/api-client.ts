@@ -26,15 +26,6 @@ export type AuthResponse = {
   user: AuthUser;
 };
 
-export type Project = {
-  id: string;
-  name: string;
-  description: string | null;
-  owner_user_id: string;
-  created_at: string;
-  updated_at: string;
-};
-
 export class ApiError extends Error {
   status: number;
 
@@ -122,20 +113,4 @@ export function resendEmailVerification(email: string) {
       body: { email },
     },
   );
-}
-
-export function createProject(token: string, payload: { name: string; description?: string | null }) {
-  return apiRequest<Project>("/projects", {
-    method: "POST",
-    token,
-    body: payload,
-  });
-}
-
-export function listProjects(token: string) {
-  return apiRequest<Project[]>("/projects", { token });
-}
-
-export function getProject(token: string, projectId: string) {
-  return apiRequest<Project>(`/projects/${projectId}`, { token });
 }

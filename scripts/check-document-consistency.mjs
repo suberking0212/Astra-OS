@@ -144,7 +144,7 @@ assert(
 assertContains(historical, "状态：`superseded`");
 assertNotContains(historical, "Agent = Decision + Capability + Policy");
 assertContains("astraos_mvp_ui_preview.html", "此 Agent-first UI Preview 已废弃");
-assertContains("WORKSPACE_MAIN_UI_COMPONENT_SPEC.md", "当前正式 Workspace 只读取 Auth 和 Project API");
+assertContains("WORKSPACE_MAIN_UI_COMPONENT_SPEC.md", "当前正式 Workspace 只读取 Auth API");
 
 assertContains(architecture, "MVP 必须落地四类逻辑模块");
 assertContains(architecture, "Governance 内部模块");

@@ -1,5 +1,5 @@
-import { WorkspaceLauncher } from "@/components/workspace/workspace-launcher";
+import { WorkspaceDetail } from "@/components/workspace/workspace-detail";
 
 export default function WorkspacePage() {
-  return <WorkspaceLauncher />;
+  return <WorkspaceDetail />;
 }

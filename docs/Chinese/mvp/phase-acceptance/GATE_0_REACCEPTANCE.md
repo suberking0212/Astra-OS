@@ -4,6 +4,8 @@
 
 后续审计说明：本记录只证明 commit `0953b8c62b03922e581d9374d6f51ebf0f37798b` 在当次重新验收范围内通过。之后的再次审计发现 HumanExecutor 缺少 `human` RuntimeInvocation、Direct Human Routing 与 Human Takeover 未明确区分、MVP Governance 清单和可选 Queue 清单仍有表述缺口。后续文档已补齐这些语义并扩展 `pnpm docs:check`；这些补充不改变 Gate 0 的工程、数据或系统主权结论，也不应被误读为已经存在于该历史 commit 中。
 
+当前基线说明：当前 production 基线已进一步调整为“单一 `/workspace` shell + Auth API + `users` / `email_verification_codes` 双表数据基线”；本历史记录中的 `projects` / workspace 容器管理语义仅用于描述当次重新验收时点，不代表当前正式实现。
+
 ## 1. 验收元数据
 
 - Phase：Phase 0 — Rebuild Baseline Corrective Reacceptance

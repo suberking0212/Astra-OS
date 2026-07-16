@@ -6,6 +6,8 @@
 
 撤销原因：完整文档审计确认产品定位、Account/Control Plane 归属、Governance/Managed Runtime/Audit 主权、`external_agent` RuntimeInvocation、ToolAction Executor 分类和 Presentation View Model 字段冲突在对应实现 commit 中已经存在，因此原“文档之间不存在架构主权冲突”的结论不成立。本文件保留原验收证据和技术债务，只作为历史审计记录。
 
+后续基线说明：当前正式基线已经进一步收口为“单一 `/workspace` shell + Auth API + `users` / `email_verification_codes` 双表数据基线”；原记录中的 workspace/project 容器管理语义不再代表当前 production 设计。
+
 ## 1. 验收元数据
 
 - Phase：Phase 0 — Rebuild Baseline
