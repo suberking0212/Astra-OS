@@ -81,6 +81,27 @@ export default function LoginPage() {
   }, []);
 
   useEffect(() => {
+    const html = document.documentElement;
+    const body = document.body;
+    const previousHtmlOverflow = html.style.overflow;
+    const previousHtmlOverscrollBehavior = html.style.overscrollBehavior;
+    const previousBodyOverflow = body.style.overflow;
+    const previousBodyOverscrollBehavior = body.style.overscrollBehavior;
+
+    html.style.overflow = "hidden";
+    html.style.overscrollBehavior = "none";
+    body.style.overflow = "hidden";
+    body.style.overscrollBehavior = "none";
+
+    return () => {
+      html.style.overflow = previousHtmlOverflow;
+      html.style.overscrollBehavior = previousHtmlOverscrollBehavior;
+      body.style.overflow = previousBodyOverflow;
+      body.style.overscrollBehavior = previousBodyOverscrollBehavior;
+    };
+  }, []);
+
+  useEffect(() => {
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (prefersReducedMotion) {
       return;
@@ -255,143 +276,147 @@ export default function LoginPage() {
       </div>
       <div className="auth-immersive-noise" aria-hidden="true" />
       <section className="auth-stage" aria-labelledby="auth-title">
-        <div className="agent-brand auth-immersive-brand" aria-label="AstraOS Workspace">
-          <div className="agent-brand-mark" aria-hidden="true" />
-          <div className="agent-brand-name">
-            AstraOS
-            <span className="agent-brand-subtitle">Workspace</span>
-          </div>
-        </div>
-
-        <div className="auth-copy">
-          <p className="auth-kicker">Governed access for the workspace</p>
-          <h1 id="auth-title">Productivity is King.</h1>
-          <p className="auth-copy-line">
-            Email authentication gates owner-scoped workspaces while the new Task-first runtime is rebuilt.
-          </p>
-        </div>
-
-        <section className="auth-card" aria-labelledby="login-heading">
-          <div className="auth-card-header">
-            <div>
-              <h2 id="login-heading">{modeCopy.title}</h2>
-              <p>{modeCopy.caption}</p>
+        <div className="auth-topbar">
+          <div className="agent-brand auth-immersive-brand" aria-label="AstraOS Workspace">
+            <div className="agent-brand-mark" aria-hidden="true" />
+            <div className="agent-brand-name">
+              AstraOS
+              <span className="agent-brand-subtitle">Workspace</span>
             </div>
-            <span className={`auth-card-status ${apiStatusClassName}`}>
-              {apiStatusLabel}
-            </span>
+          </div>
+        </div>
+
+        <div className="auth-center-stack">
+          <div className="auth-copy">
+            <p className="auth-kicker">Governed access for the workspace</p>
+            <h1 id="auth-title">Productivity is King.</h1>
+            <p className="auth-copy-line">
+              Email authentication gates owner-scoped workspaces while the new Task-first runtime is rebuilt.
+            </p>
           </div>
 
-          <div
-            className="segmented auth-mode auth-mode-immersive"
-            ref={modeTrackRef}
-            role="tablist"
-            aria-label="Authentication mode"
-          >
-            <span className="auth-mode-slider" ref={modeSliderRef} aria-hidden="true" />
-            <button
-              aria-selected={mode === "signin"}
-              className={`auth-mode-option ${mode === "signin" ? "active" : ""}`}
-              onClick={() => setMode("signin")}
-              ref={signInButtonRef}
-              role="tab"
-              type="button"
-            >
-              <span className="auth-mode-option-content">
-                <LogIn className="icon" aria-hidden="true" />
-                <span>Sign in</span>
-              </span>
-            </button>
-            <button
-              aria-selected={mode === "register"}
-              className={`auth-mode-option ${mode === "register" ? "active" : ""}`}
-              onClick={() => setMode("register")}
-              ref={registerButtonRef}
-              role="tab"
-              type="button"
-            >
-              <span className="auth-mode-option-content">
-                <UserPlus className="icon" aria-hidden="true" />
-                <span>Register</span>
-              </span>
-            </button>
-          </div>
-
-          <form className="auth-form-stack" onSubmit={handleSubmit}>
-            <label className="form-field auth-field">
-              <span>Email</span>
-              <input
-                autoComplete="email"
-                inputMode="email"
-                onChange={(event) => setEmail(event.target.value)}
-                placeholder="name@company.com"
-                required
-                type="email"
-                value={email}
-              />
-            </label>
-
-            <label className="form-field auth-field">
-              <span>Password</span>
-              <input
-                autoComplete={mode === "signin" ? "current-password" : "new-password"}
-                minLength={8}
-                onChange={(event) => setPassword(event.target.value)}
-                placeholder="At least 8 characters"
-                required
-                type="password"
-                value={password}
-              />
-            </label>
-
-            {error ? (
-              <div className="form-alert danger auth-alert" role="alert">
-                <AlertCircle className="icon" aria-hidden="true" />
-                <span>{error}</span>
+          <section className="auth-card" aria-labelledby="login-heading">
+            <div className="auth-card-header">
+              <div>
+                <h2 id="login-heading">{modeCopy.title}</h2>
+                <p>{modeCopy.caption}</p>
               </div>
-            ) : null}
+              <span className={`auth-card-status ${apiStatusClassName}`}>
+                {apiStatusLabel}
+              </span>
+            </div>
 
-            {status === "success" ? (
-              <div className="form-alert success auth-alert" role="status">
-                <CheckCircle2 className="icon" aria-hidden="true" />
-                <span>Authenticated. Opening Workspace.</span>
-              </div>
-            ) : null}
+            <div
+              className="segmented auth-mode auth-mode-immersive"
+              ref={modeTrackRef}
+              role="tablist"
+              aria-label="Authentication mode"
+            >
+              <span className="auth-mode-slider" ref={modeSliderRef} aria-hidden="true" />
+              <button
+                aria-selected={mode === "signin"}
+                className={`auth-mode-option ${mode === "signin" ? "active" : ""}`}
+                onClick={() => setMode("signin")}
+                ref={signInButtonRef}
+                role="tab"
+                type="button"
+              >
+                <span className="auth-mode-option-content">
+                  <LogIn className="icon" aria-hidden="true" />
+                  <span>Sign in</span>
+                </span>
+              </button>
+              <button
+                aria-selected={mode === "register"}
+                className={`auth-mode-option ${mode === "register" ? "active" : ""}`}
+                onClick={() => setMode("register")}
+                ref={registerButtonRef}
+                role="tab"
+                type="button"
+              >
+                <span className="auth-mode-option-content">
+                  <UserPlus className="icon" aria-hidden="true" />
+                  <span>Register</span>
+                </span>
+              </button>
+            </div>
 
-            <button className="auth-submit" disabled={status === "loading"} type="submit">
-              <LockKeyhole className="icon" aria-hidden="true" />
-              {status === "loading" ? "Working..." : modeCopy.action}
-            </button>
-          </form>
+            <form className="auth-form-stack" onSubmit={handleSubmit}>
+              <label className="form-field auth-field">
+                <span>Email</span>
+                <input
+                  autoComplete="email"
+                  inputMode="email"
+                  onChange={(event) => setEmail(event.target.value)}
+                  placeholder="name@company.com"
+                  required
+                  type="email"
+                  value={email}
+                />
+              </label>
 
-          <p className="auth-footnote">
-            {mode === "signin" ? (
-              <>
-                No local account yet?{" "}
-                <button
-                  className="auth-inline-link"
-                  onClick={() => setMode("register")}
-                  type="button"
-                >
-                  Register
-                </button>
-                .
-              </>
-            ) : (
-              <>
-                Already registered?{" "}
-                <button
-                  className="auth-inline-link"
-                  onClick={() => setMode("signin")}
-                  type="button"
-                >
-                  Sign in
-                </button>
-                .
-              </>
-            )}
-          </p>
-        </section>
+              <label className="form-field auth-field">
+                <span>Password</span>
+                <input
+                  autoComplete={mode === "signin" ? "current-password" : "new-password"}
+                  minLength={8}
+                  onChange={(event) => setPassword(event.target.value)}
+                  placeholder="At least 8 characters"
+                  required
+                  type="password"
+                  value={password}
+                />
+              </label>
+
+              {error ? (
+                <div className="form-alert danger auth-alert" role="alert">
+                  <AlertCircle className="icon" aria-hidden="true" />
+                  <span>{error}</span>
+                </div>
+              ) : null}
+
+              {status === "success" ? (
+                <div className="form-alert success auth-alert" role="status">
+                  <CheckCircle2 className="icon" aria-hidden="true" />
+                  <span>Authenticated. Opening Workspace.</span>
+                </div>
+              ) : null}
+
+              <button className="auth-submit" disabled={status === "loading"} type="submit">
+                <LockKeyhole className="icon" aria-hidden="true" />
+                {status === "loading" ? "Working..." : modeCopy.action}
+              </button>
+            </form>
+
+            <p className="auth-footnote">
+              {mode === "signin" ? (
+                <>
+                  No local account yet?{" "}
+                  <button
+                    className="auth-inline-link"
+                    onClick={() => setMode("register")}
+                    type="button"
+                  >
+                    Register
+                  </button>
+                  .
+                </>
+              ) : (
+                <>
+                  Already registered?{" "}
+                  <button
+                    className="auth-inline-link"
+                    onClick={() => setMode("signin")}
+                    type="button"
+                  >
+                    Sign in
+                  </button>
+                  .
+                </>
+              )}
+            </p>
+          </section>
+        </div>
       </section>
     </main>
   );

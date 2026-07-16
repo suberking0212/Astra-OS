@@ -1,15 +1,22 @@
 "use client";
 
-import { ArrowLeft, ClipboardCheck, LoaderCircle, LogOut, SendHorizonal, ShieldCheck } from "lucide-react";
+import {
+  ArrowUp,
+  Brain,
+  Clock3,
+  LoaderCircle,
+  LogOut,
+  Plus,
+  Sparkles,
+} from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import {
   ApiError,
   getMe,
   getProject,
-  workspaceActionMappings,
   type AuthUser,
   type Project,
 } from "@/lib/api-client";
@@ -22,10 +29,8 @@ export function WorkspaceDetail() {
   const workspaceId = params.workspaceId;
   const [user, setUser] = useState<AuthUser | null>(null);
   const [project, setProject] = useState<Project | null>(null);
-  const [taskPrompt, setTaskPrompt] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const mappings = useMemo(() => workspaceActionMappings(workspaceId), [workspaceId]);
 
   const handleUnauthorized = useCallback((err: unknown) => {
     if (err instanceof ApiError && err.status === 401) {
@@ -73,98 +78,114 @@ export function WorkspaceDetail() {
   }
 
   return (
-    <main className="agent-experience">
-      <section className="agent-shell" aria-labelledby="workspace-title">
-        <header className="agent-top">
-          <Link className="agent-brand" href={routes.workspace} aria-label="Astra Workspace">
-            <div className="agent-brand-mark" aria-hidden="true" />
-            <div className="agent-brand-name">
-              <span className="agent-brand-title">Astra</span>
-              <span className="agent-brand-subtitle">Workspace</span>
-            </div>
-          </Link>
-          <button className="agent-account" type="button" onClick={signOut}>
-            <LogOut className="icon" aria-hidden="true" />
-            <span>{user?.email ?? "Account"}</span>
-          </button>
-        </header>
-
-        <div className="agent-layout">
-          <aside className="agent-sidebar">
-            <Link className="agent-new-task" href={routes.workspace}>
-              <ArrowLeft className="icon" aria-hidden="true" />
-              Workspaces
-            </Link>
-            <div className="agent-task-list">
-              {mappings.map((mapping) => (
-                <div className="agent-task-item" key={mapping.key}>
-                  <span className="agent-task-title">{mapping.label}</span>
-                  <span className="agent-task-meta">{mapping.method} {mapping.path}</span>
-                </div>
-              ))}
-            </div>
-          </aside>
-
-          <section className="agent-main">
-            {isLoading ? (
-              <div className="empty-state">
-                <LoaderCircle className="icon spin" aria-hidden="true" />
-                <span>Loading workspace.</span>
+    <main className="agent-experience agent-workspace-view">
+      <section className="agent-workspace" aria-labelledby="workspace-title">
+        <aside className="agent-sidebar" aria-label="Workspace navigation">
+          <div className="agent-sidebar-head">
+            <Link className="agent-brand" href={routes.workspace} aria-label="Astra Workspace">
+              <div className="agent-brand-mark" aria-hidden="true" />
+              <div className="agent-brand-name">
+                <span className="agent-brand-title">Astra</span>
+                <span className="agent-brand-subtitle">Workspace</span>
               </div>
-            ) : error ? (
-              <div className="form-alert error">{error}</div>
-            ) : (
-              <>
-                <div className="agent-thread-header">
-                  <div>
-                    <div className="agent-status-pill">
-                      <ShieldCheck className="icon" aria-hidden="true" />
-                      <span>Runtime rebuild pending</span>
+            </Link>
+          </div>
+
+          <div className="agent-nav-area">
+            <p className="agent-section-label">Current workspace</p>
+            <div className="agent-task-item">
+              <Brain className="icon" aria-hidden="true" />
+              <span className="agent-task-item-text">{project?.name ?? "Workspace"}</span>
+            </div>
+          </div>
+
+          <Link className="agent-new-task" href={routes.workspace}>
+            Workspaces
+            <Plus className="icon" aria-hidden="true" />
+          </Link>
+
+          <div className="agent-profile">
+            <div className="agent-profile-main">
+              <span className="agent-profile-avatar">{user?.email?.[0]?.toUpperCase() ?? "A"}</span>
+              <span className="agent-profile-name">{user?.email ?? "Account"}</span>
+            </div>
+            <button type="button" onClick={signOut} aria-label="Sign out">
+              <LogOut className="icon" aria-hidden="true" />
+            </button>
+          </div>
+        </aside>
+
+        <section className="agent-work-main">
+          <header className="agent-work-top">
+            <div className="agent-task-title" id="workspace-title">
+              <Brain className="icon" aria-hidden="true" />
+              {project?.name ?? "Astra Workspace"}
+            </div>
+            <div className="agent-top-actions">
+              <div className="agent-credit-pill" aria-label="Workspace status">
+                <Clock3 className="icon" aria-hidden="true" />
+                Workspace ready
+              </div>
+            </div>
+          </header>
+
+          {isLoading ? (
+            <div className="empty-state">
+              <LoaderCircle className="icon spin" aria-hidden="true" />
+              <span>Loading workspace.</span>
+            </div>
+          ) : error ? (
+            <div className="form-alert error">{error}</div>
+          ) : (
+            <>
+              <section className="agent-conversation" aria-label="Workspace baseline">
+                <div className="agent-run-feed workspace-task-surface">
+                  <div className="agent-thinking-card">
+                    <div className="agent-thinking-head">
+                      <div className="agent-thinking-title">
+                        <Sparkles className="icon" aria-hidden="true" />
+                        <span>Task experience is not connected yet</span>
+                      </div>
                     </div>
-                    <h1 id="workspace-title">{project?.name ?? "Workspace"}</h1>
-                    <p>{project?.description ?? "Task-first workspace shell."}</p>
+                    <div className="agent-thinking-body">
+                      <p>
+                        This production workspace currently reads only authenticated account and workspace data.
+                        Task submission, interactions, progress, and results will be connected through the formal
+                        Workspace presentation contract in the next delivery phases.
+                      </p>
+                      {project?.description ? <p>{project.description}</p> : null}
+                    </div>
                   </div>
                 </div>
+              </section>
 
-                <div className="agent-thread-body">
-                  <section className="agent-card">
-                    <div className="panel-header">
-                      <div>
-                        <h2 className="panel-title">Contract-first runtime placeholder</h2>
-                        <p className="panel-caption">
-                          The old hardcoded Agent/Workflow runtime has been removed. These controls mark the API surface that the new TaskRequest and RuntimeInvocation system should fill.
-                        </p>
-                      </div>
-                      <ClipboardCheck className="icon" aria-hidden="true" />
+              <section className="agent-bottom-stack" aria-label="Task composer unavailable">
+                <div className="agent-composer-layer">
+                  <form className="agent-composer">
+                    <label>
+                      <span className="sr-only">Task composer unavailable</span>
+                      <textarea
+                        aria-label="Task composer unavailable"
+                        disabled
+                        placeholder="Task submission will be enabled after the Workspace contract is implemented."
+                        rows={3}
+                      />
+                    </label>
+                    <div className="agent-composer-footer">
+                      <button className="agent-composer-plus" type="button" disabled aria-label="Add context unavailable">
+                        <Plus className="icon" aria-hidden="true" />
+                      </button>
+                      <span className="agent-composer-spacer" />
+                      <button className="agent-send" type="button" disabled aria-label="Submit task unavailable">
+                        <ArrowUp className="icon" aria-hidden="true" />
+                      </button>
                     </div>
-                    <div className="panel-body field-stack">
-                      {mappings.map((mapping) => (
-                        <div className="field" key={mapping.key}>
-                          <div className="field-label">{mapping.label}</div>
-                          <div className="field-value">{mapping.method} {mapping.path}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </section>
+                  </form>
                 </div>
-
-                <div className="agent-composer">
-                  <textarea
-                    aria-label="Task prompt"
-                    onChange={(event) => setTaskPrompt(event.target.value)}
-                    placeholder="Describe the task. Submission will be wired to the new TaskRequest API."
-                    rows={3}
-                    value={taskPrompt}
-                  />
-                  <button className="btn primary" type="button" disabled>
-                    <SendHorizonal className="icon" aria-hidden="true" />
-                    Submit task
-                  </button>
-                </div>
-              </>
-            )}
-          </section>
-        </div>
+              </section>
+            </>
+          )}
+        </section>
       </section>
     </main>
   );

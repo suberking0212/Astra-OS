@@ -1,1 +1,1 @@
-"""Phase 0 route namespace reserved for future API groups."""
+"""HTTP route namespace for the AstraOS API."""

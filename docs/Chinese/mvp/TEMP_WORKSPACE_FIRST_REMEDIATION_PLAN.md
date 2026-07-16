@@ -1,18 +1,20 @@
 # AstraOS Task-first 工程实现计划
 
-更新时间：2026-07-14
+更新时间：2026-07-15
 
 本文档定义 AstraOS MVP 后续开发的工程实现计划。主架构以 `ARCHITECTURE_BASELINE.md` 为准。
 
 ## 1. 项目定位
 
 ```text
-AstraOS 是一个 Enterprise AI Runtime。
+AstraOS 是 Enterprise AI Control Plane。
 
-AI Employee 是运行在 Runtime 上的业务应用。
+AI Employee 是运行在 AstraOS Control Plane 上的业务应用。
 
-Agent 是 Runtime 中负责决策的一部分，而不是整个系统。
+Agent / Hermes Executor 是执行侧能力的一部分，而不是整个系统。
 ```
+
+Hermes 自带 Agent Harness；AstraOS 不自研或复制 Harness。
 
 AstraOS 的目标是完成 Task，而不是展示 Agent。
 
@@ -25,8 +27,9 @@ AstraOS 的目标是完成 Task，而不是展示 Agent。
 ```mermaid
 flowchart TD
   FE[Frontend<br/>Workspace] --> API[API Layer<br/>JWT / SMTP / Account / REST]
-  API --> RT[AI Runtime]
-  RT --> FD[Foundation<br/>LLM / Browser / MCP / Database / Redis / Storage]
+  API --> CP[AstraOS Control Plane]
+  CP --> RA[Runtime Adapter / Executor Backend]
+  RA --> FD[Foundation<br/>LLM / Browser / MCP / Database / Redis / Storage]
 ```
 
 展开后：
@@ -34,16 +37,17 @@ flowchart TD
 ```text
 Frontend（Workspace）
   -> API Layer（JWT / SMTP / Account / REST）
-  -> AI Runtime
+  -> AstraOS Control Plane
+  -> Runtime Adapter / Executor Backend
   -> Foundation（LLM / Browser / MCP / Database / Redis / Storage）
 ```
 
-Context、Permission、Approval、Audit、Memory 都属于 Runtime 内部能力。
+Context、Permission、Approval、Audit、Memory 都属于 AstraOS Control Plane 的默认能力，不能被下放为 Hermes 私有能力。
 
 ## 3. 正确任务路径
 
 ```text
-User -> Delegate Task -> Decision Engine -> Runtime -> TaskResult
+User -> Delegate Task -> Decision Engine -> Runtime Adapter -> TaskResult
 ```
 
 更完整的工程链路：
@@ -51,10 +55,10 @@ User -> Delegate Task -> Decision Engine -> Runtime -> TaskResult
 ```text
 Task
   -> Decision
-  -> Runtime
-  -> Execution
-  -> WorkflowExecutor（可选）
-  -> Tool（由 Executor 调用）
+  -> AstraOS Control Plane
+  -> Runtime Adapter
+  -> Executor Backend（Direct / Tool / Workflow / Hermes）
+  <-> Interaction Runtime（需要用户参与时）
   -> TaskResult
 ```
 
@@ -76,26 +80,30 @@ Agent = Decision + Capability + Policy
 
 Role、Memory、Execution Profile、Prompt、Persona 都是配置，不是 Agent 的核心定义。
 
-## 5. AI Runtime 内部结构
+## 5. Control Plane 与 Runtime Adapter 结构
 
-Runtime 是 AstraOS 的核心执行平面：
+AstraOS Control Plane 是系统主权边界：
 
 ```text
-AI Runtime
-  ├── Main Flow
-  │   ├── Task Intake
-  │   ├── Decision Engine
-  │   ├── Planning（可选）
-  │   ├── Execution
-  │   └── TaskResult
-  └── Supporting Capabilities
-      ├── Context
-      ├── Permission
-      ├── Approval
-      ├── Tool
-      ├── Memory
-      ├── Scheduler
-      └── Audit
+Astra OS Control Plane
+  ├── User / Organization / Project
+  ├── AI App / Employee
+  ├── Workflow Definition
+  ├── Task / AppRun 状态机
+  ├── RBAC / Policy
+  ├── Business Approval
+  ├── Audit / Usage / Billing
+  └── Runtime Adapter
+      └── Hermes Executor（可选后端）
+          ├── Agent Harness（Hermes 自带，AstraOS 不自研）
+          │   ├── Agent Loop
+          │   ├── Planning
+          │   ├── Tool Calling / MCP
+          │   ├── Memory / Skills
+          │   └── Subagents
+          ├── Execution Timers
+          ├── Docker / SSH / Modal Sandbox
+          └── Model Adapter / Capability Contract
 ```
 
 模块定位：
@@ -105,7 +113,7 @@ AI Runtime
 | Task Intake | 接收用户委托，创建 TaskRequest | 不选择 Workflow |
 | Decision Engine | 判断直接回答、追问、执行路径、权限、结果标准 | 不直接写表或调用工具 |
 | Planning（可选） | 给用户展示可理解计划 | 不是所有任务必经层 |
-| Execution | 选择并运行 direct answer、clarification、tool action 或 workflow executor | 不绕过权限和审批 |
+| Runtime Adapter | 选择并运行 direct answer、clarification、tool action、workflow 或 Hermes executor | 不绕过权限和审批 |
 | Context | 按需装配 Workspace、附件、历史、记忆 | 不无脑塞全部上下文 |
 | Permission | 约束本次 Task 可以读写什么 | 不是独立外部服务 |
 | Approval | 高风险写入前暂停并等待用户确认 | 不提前写入业务表 |
@@ -183,7 +191,7 @@ Planning 是 Decision Engine 的可选模块，不是独立层。
 
 ## 8. RuntimeInvocation
 
-进入 Runtime 的对象必须是结构化 `RuntimeInvocation`，不能是原始 prompt 或未校验的模型自由文本。
+进入 Runtime Adapter 的对象必须是结构化 `RuntimeInvocation`，不能是原始 prompt 或未校验的模型自由文本。
 
 ```ts
 type RuntimeInvocation = {

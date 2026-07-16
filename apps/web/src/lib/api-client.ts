@@ -35,20 +35,6 @@ export type Project = {
   updated_at: string;
 };
 
-export type WorkspaceActionKey =
-  | "submit_task"
-  | "approve_action"
-  | "provide_context"
-  | "view_result";
-
-export type WorkspaceActionMapping = {
-  key: WorkspaceActionKey;
-  label: string;
-  method: "GET" | "POST";
-  path: string;
-  status: "planned";
-};
-
 export class ApiError extends Error {
   status: number;
 
@@ -152,37 +138,4 @@ export function listProjects(token: string) {
 
 export function getProject(token: string, projectId: string) {
   return apiRequest<Project>(`/projects/${projectId}`, { token });
-}
-
-export function workspaceActionMappings(projectId: string): WorkspaceActionMapping[] {
-  return [
-    {
-      key: "submit_task",
-      label: "Submit task",
-      method: "POST",
-      path: `/projects/${projectId}/tasks`,
-      status: "planned",
-    },
-    {
-      key: "approve_action",
-      label: "Approve action",
-      method: "POST",
-      path: `/projects/${projectId}/approvals/{approval_id}/approve`,
-      status: "planned",
-    },
-    {
-      key: "provide_context",
-      label: "Provide context",
-      method: "POST",
-      path: `/projects/${projectId}/task-context`,
-      status: "planned",
-    },
-    {
-      key: "view_result",
-      label: "View result",
-      method: "GET",
-      path: `/projects/${projectId}/tasks/{task_id}/result`,
-      status: "planned",
-    },
-  ];
 }

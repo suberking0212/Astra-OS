@@ -9,6 +9,7 @@
     "dev:api": "cd services/api && uvicorn app.main:app --reload",
     "infra:up": "docker compose -f infra/docker-compose.yml up -d",
     "infra:down": "docker compose -f infra/docker-compose.yml down",
+    "baseline:check": "node scripts/check-rebuilt-baseline.mjs",
     "typecheck": "pnpm --filter @astraos/web typecheck",
     "lint": "pnpm --filter @astraos/web lint"
   },

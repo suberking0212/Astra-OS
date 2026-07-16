@@ -1,1 +1,2 @@
-export const ASTRAOS_PHASE = "phase-0" as const;
+// Public cross-application contracts will be exported here after validation.
+export {};

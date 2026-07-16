@@ -1,9 +1,9 @@
 "use client";
 
-import { ArrowRight, CheckCircle2, ClipboardList, LoaderCircle, LogOut, Plus, ShieldCheck } from "lucide-react";
+import { ArrowRight, ChevronDown, ChevronLeft, ChevronRight as ChevronRightIcon, Edit3, LoaderCircle, LogOut, Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type CSSProperties } from "react";
 
 import { ApiError, createProject, getMe, listProjects, type AuthUser, type Project } from "@/lib/api-client";
 import { clearStoredSession, getStoredSession, saveSession } from "@/lib/auth";
@@ -94,7 +94,7 @@ export function WorkspaceLauncher() {
 
   return (
     <main className="agent-experience workspace-launcher-experience">
-      <section className="workspace-launcher-shell" aria-labelledby="workspace-title">
+      <section className="agent-onboarding workspace-launcher-shell" aria-labelledby="workspace-title">
         <header className="agent-top workspace-launcher-top">
           <Link className="agent-brand" href={routes.workspace} aria-label="Astra Workspace">
             <div className="agent-brand-mark" aria-hidden="true" />
@@ -103,38 +103,92 @@ export function WorkspaceLauncher() {
               <span className="agent-brand-subtitle">Workspace</span>
             </div>
           </Link>
+          <div className="agent-progress" aria-label="workspace setup progress">
+            <span />
+            <span />
+          </div>
           <button className="agent-account" type="button" onClick={signOut}>
             <LogOut className="icon" aria-hidden="true" />
             <span>{user?.email ?? "Account"}</span>
+            <ChevronDown className="icon" aria-hidden="true" />
           </button>
         </header>
 
-        <div className="workspace-launcher-grid" id="workspace-main">
-          <section className="workspace-launcher-hero">
-            <div className="agent-status-pill">
-              <ShieldCheck className="icon" aria-hidden="true" />
-              <span>Rebuild baseline</span>
-            </div>
-            <h1 id="workspace-title">Task-first workspace</h1>
-            <p>
-              The old agent, workflow, runtime, test chat, and marketplace surfaces have been removed.
-              This shell now preserves account access, workspace ownership, and the visual foundation for
-              the new contract-first runtime.
-            </p>
-            <div className="workspace-launcher-checks">
-              <span><CheckCircle2 className="icon" aria-hidden="true" /> JWT auth retained</span>
-              <span><CheckCircle2 className="icon" aria-hidden="true" /> Email verification retained</span>
-              <span><CheckCircle2 className="icon" aria-hidden="true" /> Workspace shell retained</span>
-            </div>
-          </section>
+        <button className="circle-button workspace-launcher-back" type="button" aria-label="Back">
+          <ChevronLeft className="icon" aria-hidden="true" />
+        </button>
 
+        <section className="agent-hero workspace-launcher-hero" id="workspace-main">
+          <h1 id="workspace-title">Which workspace will run your day?</h1>
+          <p>Pick a workspace. AstraOS opens the task runtime with context, approvals, and results in one focused flow.</p>
+
+          <div className="agent-stage" aria-label="Workspace preset carousel">
+            <button className="circle-button" type="button" aria-label="Previous workspace">
+              <ChevronLeft className="icon" aria-hidden="true" />
+            </button>
+
+            <div className="agent-orbs" aria-hidden="true">
+              <div className="agent-orb" style={{ "--size": "132px" } as CSSProperties}>
+                <div className="agent-avatar-scene" />
+              </div>
+              <div className="agent-orb active" style={{ "--size": "176px" } as CSSProperties}>
+                <div className="agent-avatar-scene" />
+              </div>
+              <div className="agent-orb" style={{ "--size": "132px" } as CSSProperties}>
+                <div className="agent-avatar-scene" />
+              </div>
+            </div>
+
+            <button className="circle-button" type="button" aria-label="Next workspace">
+              <ChevronRightIcon className="icon" aria-hidden="true" />
+            </button>
+          </div>
+
+          <div className="agent-copy">
+            <h2 className="agent-name">
+              <span>{projects[0]?.name ?? name}</span>
+              <Edit3 className="icon" aria-hidden="true" />
+            </h2>
+            <div className="agent-role">Enterprise AI Runtime workspace</div>
+            <p>
+              {projects[0]?.description ?? "Delegate work, approve sensitive actions, provide missing context, and receive business results."}
+            </p>
+            <div className="dots workspace-launcher-dots" aria-label="Workspace presets">
+              {(projects.length ? projects.slice(0, 5) : [null, null, null]).map((project, index) => (
+                project ? (
+                  <Link
+                    aria-label={`Open ${project.name}`}
+                    className={`agent-dot ${index === 0 ? "active" : ""}`}
+                    href={routes.workspaceProject(project.id)}
+                    key={project.id}
+                  />
+                ) : (
+                  <span className={`agent-dot ${index === 0 ? "active" : ""}`} key={index} />
+                )
+              ))}
+            </div>
+            {projects[0] ? (
+              <Link className="agent-cta" href={routes.workspaceProject(projects[0].id)}>
+                Go with {projects[0].name}
+                <ArrowRight className="icon" aria-hidden="true" />
+              </Link>
+            ) : (
+              <button className="agent-cta" type="button" disabled={isBusy} onClick={createWorkspace}>
+                {status === "creating" ? <LoaderCircle className="icon spin" aria-hidden="true" /> : null}
+                Create Astra Workspace
+              </button>
+            )}
+          </div>
+        </section>
+
+        <div className="workspace-launcher-grid" id="workspace-main">
           <section className="workspace-create-panel">
             <div className="panel-header">
               <div>
                 <h2 className="panel-title">Create workspace</h2>
-                <p className="panel-caption">Only the ownership boundary is created at this stage.</p>
+                <p className="panel-caption">Set the owner boundary for task-first runtime work.</p>
               </div>
-              <ClipboardList className="icon" aria-hidden="true" />
+              <Plus className="icon" aria-hidden="true" />
             </div>
             <div className="panel-body field-stack">
               {error ? <div className="form-alert error">{error}</div> : null}

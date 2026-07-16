@@ -1,67 +1,219 @@
 # AstraOS Runtime 整改规格
 
-更新时间：2026-07-14
+更新时间：2026-07-15
 
-本文档定义 AstraOS AI Runtime 的工程整改要求。Runtime 的职责不是展示 Agent，也不是只执行 Workflow，而是把用户委托的 Task 可靠、可控、可恢复、可审计地完成。
+本文档定义 Astra OS Managed Runtime 与 Runtime Adapter 的工程整改要求。AstraOS 的职责不是展示 Agent，也不是只执行 Workflow，而是把用户委托的 Task 可靠、可控、可恢复、可审计地完成。
+
+Runtime 执行语义到 Workspace 用户交互语义的承接链路以 `TASK_PRESENTATION_CONTRACT.md` 为准。本文档负责 Managed Runtime 的工程规格，并补充 Interaction Runtime 在执行、暂停、恢复、审批和审计中的落地要求。
 
 ## 1. Runtime 定位
 
 ```text
-AstraOS 是一个 Enterprise AI Runtime。
+AstraOS = Control Plane + Governance Harness Services + Managed Runtime + Executor Backends。
 
-AI Employee 是运行在 Runtime 上的业务应用。
+AI Employee 是由 AstraOS Control Plane 定义，并由 AstraOS Managed Runtime 托管运行的企业业务责任与治理对象。
 
-Agent 是 Runtime 中负责决策的一部分，而不是整个系统。
+Employee Execution Profile 通过 Task Routing Configuration 为当前 Task 选择和约束 Executor，不负责 Agent Runtime 内部的推理、规划或 ReAct 决策。
+
+Hermes 是 Agent Runtime / Executor Backend 的一种，不是整个系统。
 ```
 
 核心判断：
 
 ```text
-Decision Engine 决定 AI 应该做什么。
-Runtime 决定 AI 能否可靠、可控、可恢复、可审计地把事情做完。
+AstraOS Control Plane 定义 AI Employee、Employee Execution Profile、资源、策略、结果合同和执行器配置。
+AstraOS Governance Harness Services 管理 Context Envelope、Tool Gateway、Permission、Approval、Invocation Validation、Policy Enforcement、Idempotency Enforcement 和 Outcome Evidence Collection。
+AstraOS Managed Runtime 管理持久任务、Interaction、Pause / Resume、跨 Executor 路由与恢复、Reconciliation / Compensation、Human Takeover 和结果交付。
+Hermes Agent Runtime 决定自主执行循环中的下一步行动，并通过其 Execution Harness 组织模型、Executor-local Context、工具请求和执行环境。
 ```
 
-Workflow 是 Runtime 的一种可选 executor，不是 Runtime 的中心。
+Employee Execution Profile 的定义为：
 
-## 2. 总体架构
+```text
+Employee Execution Profile
+= Task Routing Configuration
++ Capability Requirements
++ Policy Constraints
++ Executor Preferences
+```
+
+逻辑 Executor 类型包括：
+
+```text
+Executor
+├── Direct Model Runtime
+├── Workflow Runtime
+├── Agent Runtime
+└── Human Executor
+```
+
+Tool 不与上述 Executor 并列。Tool 是 Executor 通过 AstraOS Tool Gateway 请求的受治理能力；现有 ToolActionExecutor 是封装单次受治理 Tool 调用的 Executor Adapter。
+
+Workflow Runtime 和 Agent Runtime 都是 Runtime Adapter 下的可选 Executor，不是系统中心。
+
+本文档中的 Managed Runtime 不指 AstraOS 自研复杂 Agent Runtime 本体。AstraOS 不自研模型执行型 Agent Harness；Agent loop、长期技能学习、沙箱集群、多渠道网关、模型适配和模型路由等执行侧能力优先通过 Hermes 等外部 Executor Backend 或 Foundation 能力复用。
+
+Hermes Execution Harness 负责 Agent loop、Prompt assembly、Executor-local model context、Tool calling loop、Skills / Subagents、Model adapter，以及 Executor-local validation、retry 和 stop conditions。
+
+AstraOS Governance Harness Services 管理执行边界；Managed Runtime 管理持久任务、交互、恢复和跨 Executor 协调。Audit、Observability 和 Evaluation 是独立横切能力，不能简单等同于 Agent Harness 或 Managed Runtime 内部状态。
+
+MVP 实现约束：
+
+```text
+长期边界完整保留。
+第一版工程实现压成模块化单体。
+```
+
+Runtime Service 可以先作为 API 内部模块存在，而不是独立 runtime 微服务。Interaction、Permission、Approval、Audit、Result Validation 可以先作为 Runtime Service 内的子模块、接口、字段和最小状态流转实现；只有当真实业务复杂度要求时，才逐步拆成独立服务、独立事件流或更复杂的状态机。
+
+MVP 实际落地结构：
+
+```text
+API
+└── Runtime Service
+    ├── TaskDecision
+    ├── Task State
+    ├── Interaction
+    ├── Permission / Approval
+    ├── Executor Router
+    └── Result Validation
+
+Executors
+├── Direct Model
+├── Workflow
+├── ExternalAgent
+│   └── Hermes Adapter
+├── Human
+└── ToolAction（单次 Tool 调用适配器）
+```
+
+MVP 不做：
+
+- 多个独立微服务。
+- 分布式事件总线。
+- 完整 Billing。
+- 复杂 Checkpoint。
+- 多级审批链。
+- 通用可视化 Workflow Builder。
+- 多 Executor 智能负载路由。
+- 完整企业 ABAC。
+- 自研模型执行型 Agent Harness。
+
+## 2. Runtime 架构上下文
+
+系统总体架构以 `ARCHITECTURE_BASELINE.md` 为准。本文档只定义 `Astra OS Managed Runtime / Runtime Adapter`
+这一层的工程整改要求，不能覆盖或改写主架构基线。
 
 ```mermaid
 flowchart TD
-  FE[Frontend<br/>Workspace] --> API[API Layer<br/>JWT / SMTP / Account / REST]
-  API --> RT[AI Runtime]
-  RT --> FD[Foundation<br/>LLM / Browser / MCP / Database / Redis / Storage]
+  FE[Frontend<br/>Workspace] --> API[API Layer]
+  API --> ACCT[Account Service]
+  API --> CP[Astra OS Control Plane]
+  CP --> MR[Astra OS Managed Runtime]
+  MR --> EB[Executor Backends<br/>Direct Model / Workflow / Agent Runtime / Human]
+  EB --> FD[Foundation Layer]
 ```
 
-Runtime 内部结构：
+Spec 架构结构：
+
+```
+Astra OS
+├── Control Plane
+│   ├── User / Organization / Project
+│   ├── AI App / AI Employee
+│   ├── Employee Execution Profile
+│   ├── Workflow Definition
+│   ├── Tool / Knowledge / Credential Registry
+│   ├── RBAC / Policy
+│   ├── Approval Rules
+│   └── Executor / Model Configuration
+│
+├── Governance Harness Services
+│   ├── Context Envelope
+│   ├── Tool Gateway
+│   ├── Permission / Approval
+│   ├── Invocation / Policy Validation
+│   ├── Idempotency Enforcement
+│   └── Outcome Evidence Collection
+│
+├── Managed Runtime
+│   ├── Task Intake
+│   ├── Task / AppRun State Machine
+│   ├── Workflow Orchestration
+│   ├── Interaction Runtime
+│   │   └── Presentation Contract
+│   ├── Governance Service Coordination
+│   ├── Executor Routing
+│   ├── Retry / Timeout / Cancel
+│   ├── Checkpoint / Recovery
+│   ├── Result Delivery
+│   └── Runtime Adapter
+│
+└── Executor Backends
+    └── Hermes Executor
+        ├── Execution Harness（Hermes 自带，AstraOS 不自研模型执行型 Harness）
+        │   ├── Prompt / Instruction Assembly
+        │   ├── Context Management
+        │   ├── Model Adapter
+        │   ├── Capability Contract
+        │   ├── Agent Loop
+        │   ├── Planning
+        │   ├── Tool Calling / MCP
+        │   ├── Memory / Skills
+        │   ├── Subagents
+        │   ├── Observation / Feedback
+        │   ├── Local Retry / Stop Conditions
+        │   └── Output Validation
+        │
+        └── Execution Environment
+            ├── Docker Sandbox
+            ├── SSH Backend
+            ├── Modal Backend
+            ├── Browser Environment
+            └── Filesystem / Terminal
+```
+
+禁止将 Governance Harness Services 在 MVP 中提前拆成多个独立服务。它们可以先作为 Runtime Service 内部模块实现，但不能被下放为 Hermes 私有能力。Audit、Observability 和 Evaluation 保持独立的横切职责，也不要求 MVP 立即平台化。
+
+Hermes Execution Harness 不包含：
+
+- User / Organization / Project。
+- 企业 RBAC。
+- 业务审批。
+- Billing。
+- 全局 Task 状态机。
+- 前端 Presentation Contract。
+- 企业审计。
+- AI App 生命周期。
+- Workflow 版本管理。
+- 跨任务队列调度。
+- 等待用户输入数小时后的恢复。
+
+这些是 AstraOS Control Plane、Governance Harness Services、Managed Runtime 或独立治理系统的职责。Hermes Execution Harness 只处理单次执行内贴近模型、Executor-local Context、工具请求和执行环境的能力。
+
+Harness 归属标记：
 
 ```text
-AI Runtime
-  ├── Main Flow
-  │   ├── Task Intake
-  │   ├── Decision Engine
-  │   ├── Planning（可选）
-  │   ├── Execution
-  │   └── TaskResult
-  └── Supporting Capabilities
-      ├── Context
-      ├── Permission
-      ├── Approval
-      ├── Tool
-      ├── Memory
-      ├── Scheduler
-      └── Audit
+Hermes Executor
+└── Execution Harness（Hermes 内部能力）
+
+AstraOS Governance Harness Services
+└── 执行边界治理
+
+AstraOS Managed Runtime
+└── 持久任务、Interaction、恢复与跨 Executor 协调
 ```
 
-禁止将 Context、Permission、Approval、Audit 拆成 MVP 独立层或独立服务。它们是 Runtime 的默认能力。
+AstraOS 不实现模型执行型 Agent Harness，不维护自己的 Agent loop、Executor-local 模型上下文压缩、工具调用循环、Subagents 或 Skills 学习系统。
 
 ## 3. 当前整改目标
 
-Runtime 必须支持：
+Astra OS Managed Runtime 必须支持：
 
 ```text
 创建 Task
   -> 结构化决策
-  -> 进入 Runtime
+  -> 进入 Runtime Adapter
   -> 直接回答 / 追问 / 工具动作 / 可选 Workflow
   -> 遇到审批或用户补充信息时暂停
   -> 记录恢复条件
@@ -73,10 +225,13 @@ Runtime 必须支持：
 
 平台目标：
 
-- Runtime 成为统一执行平面，不只是 API service 里的业务函数。
+- Astra OS Managed Runtime 成为统一运行管理层，不只是 API service 里的业务函数。
+- Interaction Runtime 成为任务暂停、用户补充、审批确认、人工接管和恢复执行的统一承接层。
 - Tool Definition 成为治理合同，不只是 Python 分支。
-- Approval、Permission、Idempotency、Audit 成为 Runtime 默认能力。
-- Workflow Definition 可以存在，但只能作为 Execution 下的可选 executor。
+- Permission、Approval、Invocation Validation、Policy Enforcement、Idempotency Enforcement 和 Outcome Evidence Collection 成为 Governance Harness Services 的默认能力。
+- Audit、Observability 和 Evaluation 作为独立横切能力与 Task、Runtime 和 Executor 建立稳定关联。
+- Workflow Definition 可以存在，但只能作为 Runtime Adapter 下的可选 executor。
+- MVP 阶段这些能力先在 Runtime Service 内模块化实现，不要求拆成独立服务或完整平台能力。
 
 用户体验目标：
 
@@ -90,8 +245,11 @@ Runtime 必须支持：
 TaskRequest
   -> TaskDecision
   -> RuntimeInvocation
-  -> RuntimeExecution
-  -> ToolCall / WorkflowRun（可选）
+  -> Runtime Adapter
+  -> Executor Backend（Direct Model / Workflow / Agent Runtime / Human，或单次 ToolAction Adapter）
+  <-> ExecutorEvent / ToolRequest / Interaction Intent / Result Fragment
+  <-> Interaction Runtime（需要用户参与时暂停、审批、补充信息、授权、接管或恢复）
+  -> Runtime Resume / Control Event（需要继续执行时）
   -> TaskResult
 ```
 
@@ -105,27 +263,47 @@ Task
 
 原因：并非所有 Task 都需要 Workflow。例如翻译、总结、直接回答、澄清问题，都不应强制创建完整 Workflow Run。
 
-## 5. Decision Engine 与 Runtime 的边界
+TaskDecision 不是传统意图识别里的永久标签，而是当前时刻的结构化路由决定。它必须基于用户目标、上下文完整度、Employee 能力、ToolDefinition、Permission、Approval、Executor Capability、WorkflowDefinition 和 outcome_spec 共同生成。
+
+同一个 Task 可以在运行过程中产生新的路由决定：
+
+```text
+ask_clarification
+  -> 用户补充信息
+  -> start_workflow
+
+external_agent
+  -> Agent 发现需要单次受控写入
+  -> execute_tool
+  -> 回到 external_agent
+```
+
+因此 AstraOS 不是语义库匹配器，而是面向执行形态和治理约束的任务路由系统。TaskDecision 必须可审计、可解释、可重新决策；每次重新决策都必须生成新的 RuntimeInvocation 或受控 resume / control 事件，不能让模型、Frontend、Executor 或 Hermes 通过自由文本改变执行路径。
+
+MVP 中，这条链路可以由一个 Runtime Service 在单进程内完成。`TaskDecision`、`RuntimeInvocation`、`InteractionRequest`、`Approval`、`Audit` 和 `TaskResult` 必须作为清晰的内部对象或 contract 出现，但不要求每个对象都有独立数据库表、独立队列或独立服务。
+
+## 5. Control Plane、Managed Runtime 与 Executor 的边界
 
 | 模块 | 负责什么 | 不允许做什么 |
 | --- | --- | --- |
-| Decision Engine | 判断意图、路径、权限、审批、结果标准 | 直接写表、直接调用 Tool、修改 Runtime 状态 |
-| Planning（可选） | 生成用户可理解、Runtime 可映射的计划 | 把内部 StepRun 原样暴露给用户 |
-| Runtime | 执行、暂停、恢复、重试、超时、审计 | 依赖自由文本 prompt 判断下一步 |
+| Control Plane / Decision | 定义 Employee 能力、策略、权限、审批规则和结果标准 | 直接写表、直接调用 Tool、修改运行状态 |
+| Planning（可选） | 生成用户可理解、Runtime Adapter 可映射的计划 | 把内部 StepRun 原样暴露给用户 |
+| Astra OS Managed Runtime | 状态机、权限执行、审批暂停与恢复、审计、幂等、结果验收 | 把运行控制权交给 Hermes 私有 session 或 trace |
+| Runtime Adapter / Executor | 执行、暂停、恢复、重试、超时、归一化事件 | 依赖自由文本 prompt 判断下一步或绕过 Managed Runtime |
 | Tool | 受控读取、写入和外部动作 | 绕过权限、审批、幂等 |
 | TaskResult | 判断 Task 是否真正完成并交付结果 | 用 Run 成功代替 Task 成功 |
 
 耦合原则：
 
 ```text
-Decision Engine 与 Runtime 通过 RuntimeInvocation / ToolDefinition / WorkflowDefinition / OutcomeSpec 耦合。
+Decision Engine 与 Runtime Adapter 通过 RuntimeInvocation / ToolDefinition / WorkflowDefinition / OutcomeSpec 耦合。
 
-Decision Engine 与 Runtime 不通过 prompt 文本、业务分支代码或共享内部状态耦合。
+Decision Engine 与 Runtime Adapter 不通过 prompt 文本、业务分支代码或共享内部状态耦合。
 ```
 
 ## 6. RuntimeInvocation
 
-进入 Runtime 的对象必须是 `RuntimeInvocation`，不能是原始用户 prompt 或未校验的模型自由文本。
+进入 Runtime Adapter 的对象必须是 `RuntimeInvocation`，不能是原始用户 prompt 或未校验的模型自由文本。
 
 ```json
 {
@@ -184,9 +362,9 @@ Decision Engine 与 Runtime 不通过 prompt 文本、业务分支代码或共�
 
 禁止：
 
-- Runtime 根据 `raw_input` 临时猜测 workflow。
-- Runtime 执行 Agent 返回的任意 tool name。
-- Runtime 在缺少 permission grant 或 approval requirement 的情况下执行写操作。
+- Runtime Adapter 根据 `raw_input` 临时猜测 workflow。
+- Runtime Adapter 执行 Agent 返回的任意 tool name。
+- Runtime Adapter 在缺少 permission grant 或 approval requirement 的情况下执行写操作。
 
 ## 7. Runtime 状态机
 
@@ -222,29 +400,344 @@ cancelled
 - 用 `skipped` 步骤代替 Runtime 等待态。
 - 在等待用户审批时提前写入业务表。
 
-## 8. Execution、Executor 与 Tool
+## 8. Interaction Runtime
 
-Execution 是 Runtime 的执行模块。它可以选择不同 executor：
+Interaction Runtime 是 Astra OS Managed Runtime 内部模块，负责把执行侧事件转换为可持久化、可恢复、可审计的用户交互请求。它是贯穿任务生命周期的横切能力，不是 Hermes、Tool、Workflow 或 Browser 执行完成之后的固定后置阶段。
+
+Executor Backend 可以在执行中随时发出缺信息、审批、授权、错误恢复或人工接管等 `Interaction Intent`。Managed Runtime 必须接收这些意图，创建 `InteractionRequest`，必要时暂停对应运行，并在用户响应、审批结果或恢复事件到达后，通过受控 `Runtime Resume Event` / `ExecutorControl` 恢复或终止执行。
+
+它不负责渲染 UI，也不负责执行 Tool。它负责维护：
 
 ```text
-Execution
+Interaction Intent
+  -> InteractionRequest
+  -> Workspace View Model
+  -> InteractionResponse
+  -> Runtime Resume Event
+```
+
+### 8.1 InteractionRequest
+
+每个等待用户动作都必须创建 `InteractionRequest`。
+
+```ts
+type InteractionRequest = {
+  id: string;
+  taskId: string;
+  runId: string | null;
+  stepId: string | null;
+  kind:
+    | "input"
+    | "selection"
+    | "confirmation"
+    | "approval"
+    | "result"
+    | "takeover"
+    | "progress"
+    | "error_recovery"
+    | "file_request"
+    | "authentication";
+  status: "pending" | "submitted" | "resolved" | "cancelled" | "expired";
+  blocking: boolean;
+  schema: Record<string, unknown> | null;
+  payload: Record<string, unknown>;
+  actions: InteractionAction[];
+  riskLevel: "none" | "low" | "medium" | "high";
+  visibility: "user_visible" | "summarized" | "internal_only";
+  presentationHint: "inline" | "modal" | "side_panel" | "full_screen" | null;
+  reasonCode: string;
+  createdAt: string;
+  expiresAt: string | null;
+};
+```
+
+要求：
+
+- `blocking = true` 时，Runtime 必须进入 `waiting_for_user`、`waiting_for_approval` 或 `paused`。
+- `visibility = internal_only` 的 InteractionRequest 不能进入普通 Workspace View Model。
+- `schema` 必须足以校验用户提交数据。
+- `reasonCode` 必须能映射到确定性文案模板和审计说明。
+- `payload` 不得包含 token、cookie、raw prompt、chain-of-thought、DOM selector、stack trace 或未脱敏 Tool 参数。
+
+### 8.2 InteractionResponse
+
+用户提交后必须持久化 `InteractionResponse`。
+
+```ts
+type InteractionResponse = {
+  id: string;
+  interactionId: string;
+  taskId: string;
+  userId: string;
+  action: "submit" | "select" | "approve" | "reject" | "edit" | "takeover" | "cancel";
+  data: Record<string, unknown>;
+  submittedAt: string;
+};
+```
+
+要求：
+
+- `interactionId` 必须指向同一 Task 下未终结的 InteractionRequest。
+- `data` 必须通过 `schema` 校验。
+- `approve` 必须重新校验权限、审批要求、风险等级、过期时间和幂等键。
+- `reject`、`cancel`、`expired` 必须进入可解释失败、替代路径或取消状态。
+- Runtime resume 必须幂等，不能重复提交写入、下单、发邮件、支付等副作用。
+
+### 8.3 可见性边界
+
+Runtime 内部事件进入 Workspace 前必须经过可见性分类：
+
+```text
+user_visible      可以进入 Workspace
+summarized        只能被转成用户语言
+internal_only     只能留在 Runtime / Console / Audit
+```
+
+禁止普通 Workspace API 返回：
+
+```text
+RuntimeInvocation 原始对象
+ToolCall 原始参数
+WorkflowRun / StepRun
+Executor session
+Browser DOM selector
+模型 chain-of-thought
+raw prompt
+MCP trace
+cookie / token
+内部策略规则
+idempotency key
+stack trace
+```
+
+### 8.4 Model Non-Presentation Rule
+
+模型和 Executor 只能输出受约束的语义候选或 Interaction Intent，不能决定 UI。
+
+允许：
+
+```json
+{
+  "intent": "request_user_input",
+  "reason_code": "missing_required_fields",
+  "fields": ["destination", "date"]
+}
+```
+
+禁止：
+
+```text
+请打开 FlightSearchForm，标题写“请填写航班信息”，按钮叫“开始搜索”。
+```
+
+标题、按钮、风险说明、错误提示和审批模板必须由 `reasonCode -> deterministic copy template -> i18n label` 生成。
+
+## 9. Runtime Adapter、Executor 与 Tool
+
+Runtime Adapter 是 Astra OS Managed Runtime 连接执行后端的适配模块。它可以选择不同 executor：
+
+```text
+Runtime Adapter
   ├── DirectAnswerExecutor
   ├── ClarificationExecutor
   ├── ToolActionExecutor
+  ├── ExternalAgentExecutor（可选适配器）
   └── WorkflowExecutor（可选）
 ```
 
-Executor 负责执行流程。Tool 是 executor 调用的受控资源，不是与 Execution 平级的流程。
+Executor 负责执行流程。Tool 是 executor 调用的受控资源，不是与 Runtime Adapter 平级的流程。
+
+逻辑分类为：
+
+```text
+Executor
+├── Direct Model Runtime
+├── Workflow Runtime
+├── Agent Runtime
+└── Human Executor
+
+Tool
+└── 由 Executor 通过 AstraOS Tool Gateway 调用
+```
+
+现有工程对象的映射关系：
+
+| 工程对象 | 逻辑定位 |
+| --- | --- |
+| DirectAnswerExecutor | Direct Model Runtime Adapter |
+| ClarificationExecutor | Interaction / Waiting State Adapter |
+| WorkflowExecutor | Workflow Runtime Adapter |
+| ExternalAgentExecutor | Agent Runtime Adapter |
+| ToolActionExecutor | 单次受治理 Tool 调用 Adapter |
+| ToolDefinition | Tool 治理合同 |
+| Tool | Executor 可以请求的受治理能力 |
+
+因此，ToolActionExecutor 可以继续保留，但不得据此将 Tool 定义为与 Agent Runtime 或 Workflow Runtime 并列的完整 Executor。
 
 调用关系：
 
 ```text
-Execution
+Runtime Adapter
   -> Executor
   -> ToolDefinition / Domain Service / Foundation
 ```
 
-WorkflowExecutor 只在任务确实需要多步骤流程时使用。ToolActionExecutor 可以执行单个受控 Tool。
+WorkflowExecutor 只在任务确实需要确定性多步骤流程时使用。ToolActionExecutor 可以封装单个受控 Tool 调用。
+
+ExternalAgentExecutor 用于接入 Hermes 等外部 Agent Runtime。它是 executor adapter，不是 Astra OS Managed Runtime 的替代品，也不是 AstraOS 自研的复杂 runtime 本体。
+
+当后端是 Hermes 时，ExternalAgentExecutor 接入的是 Hermes Execution Harness 对外暴露的受控 executor 接口；它不进入、不复制、不依赖 Hermes Execution Harness 的内部 loop、prompt、memory 或 trace。
+
+调用关系：
+
+```text
+RuntimeInvocation
+  -> Runtime Adapter
+  -> ExternalAgentExecutor
+  -> External Agent Runtime（Hermes / Future Backend）
+  <-> ExecutorEvent / ToolRequest / Interaction Intent / ExecutorResult
+  <-> AstraOS ToolAction / Permission / Approval / Interaction Runtime / Idempotency / Audit
+  <-> ExecutorControl(tool_result / interaction_response / resume / cancel)
+  <-> External Agent Runtime 继续执行或终止
+  -> candidate_result
+  -> AstraOS outcome_spec 验收
+  -> TaskResult
+```
+
+ExternalAgentExecutor 的职责：
+
+- 将 RuntimeInvocation 转换为外部 Agent Runtime 可理解的受控任务输入。
+- 只传递 ContextBundle 中被允许的上下文，不传递整个 Workspace 数据。
+- 将外部 Agent Runtime 的工具调用意图转换为 AstraOS ToolRequest。
+- 在 AstraOS 完成工具执行后，将 ToolResult 通过 ExecutorControl 或等价受控通道回传给外部 Agent Runtime。
+- 在写入、外部动作、不可逆动作前交回 AstraOS Permission / Approval 判断。
+- 将外部执行日志、失败原因、候选结果归一化为 ExecutorEvent / ExecutorResult。
+- 由 AstraOS 生成最终 TaskResult，而不是直接采用外部 Agent Runtime 的最终文本。
+- 平台级 Schedule Trigger 由 AstraOS 管理；Hermes 只处理单次执行内部的 timers、long-running step 和后台等待。
+
+ExternalAgentExecutor 禁止：
+
+- 直接把用户原始 prompt 交给 Hermes 等外部 runtime 执行。
+- 接受外部 runtime 返回的任意 tool name 并直接执行。
+- 让外部 runtime 绕过 ToolDefinition、Permission、Approval、Idempotency。
+- 让外部 runtime 直接连接或写入 AstraOS 主业务数据库。
+- 将外部 runtime 的 session、skill、memory、gateway、trace 作为 Workspace 产品对象暴露。
+- 依赖外部 runtime 的自学习结果自动改变 Employee 权限或 ToolDefinition。
+
+### 9.1 Executor 接口命名
+
+Runtime Adapter 与外部执行后端之间必须使用稳定的 executor 接口对象，不能依赖 Hermes 私有 session、trace 或自由文本协议。
+
+标准接口命名：
+
+```text
+ExecutorRequest
+ExecutorEvent
+ExecutorResult
+ExecutorCapability
+ExecutorControl
+```
+
+含义：
+
+| 名称 | 方向 | 用途 |
+| --- | --- | --- |
+| `ExecutorRequest` | Runtime Adapter -> Executor | 承载由 `RuntimeInvocation` 派生的受控执行输入、裁剪后的上下文、允许工具、审批策略和结果标准。 |
+| `ExecutorEvent` | Executor -> Runtime Adapter | 流式返回进度、工具请求、交互意图、候选结果、失败和诊断摘要。 |
+| `ExecutorResult` | Executor -> Runtime Adapter | 返回单次执行的候选结果、使用摘要和结束原因；它不是最终 `TaskResult`。 |
+| `ExecutorCapability` | Executor -> Runtime Adapter | 声明执行后端支持的执行能力，用于路由、降级和安全校验。 |
+| `ExecutorControl` | Runtime Adapter -> Executor | 发送 cancel、pause、resume、abort、heartbeat、tool_result 等受控命令。 |
+
+参考接口：
+
+```ts
+interface ExecutorBackend {
+  start(request: ExecutorRequest): Promise<{ executionId: string }>;
+  sendControl(executionId: string, command: ExecutorControl): Promise<void>;
+  streamEvents(executionId: string): AsyncIterable<ExecutorEvent>;
+  cancel(executionId: string): Promise<void>;
+}
+```
+
+命名要求：
+
+- `RuntimeInvocation` 是 AstraOS 内部进入 Runtime Adapter 的标准对象。
+- `ExecutorRequest` 是 Runtime Adapter 发给具体 executor backend 的标准对象。
+- `ExternalAgentInvocation` 如继续存在，只能作为 `ExecutorRequest` 的 Hermes POC 兼容别名或实现细节。
+- `ExecutorEvent` 可以承载 `tool_request`、`interaction_intent`、`candidate_result`、`progress` 和 `failed`。
+- `needs_context` 等外部执行事件不能直接进入前端，必须先由 Runtime Adapter 转换为 AstraOS 统一的 `InteractionRequest`，再通过 Presentation Contract 映射为 Workspace View Model。
+- `ExecutorControl` 必须能承载 AstraOS 工具执行后的 `tool_result`，供外部 Agent Runtime 继续执行。
+- `ExecutorResult` 必须经过 AstraOS outcome_spec 验收后，才能生成最终 `TaskResult`。
+
+### 9.2 Capability Contract 分层
+
+Capability Contract 必须分为两层，不能把 Executor 能力和模型能力混成一个合同。
+
+#### Executor Capability
+
+`ExecutorCapability` 属于：
+
+```text
+Runtime Adapter ↔ Executor Backend
+```
+
+它描述执行后端能否承接某类任务，以及 Runtime 是否需要路由、降级或提前请求用户参与。
+
+示例：
+
+```json
+{
+  "backend": "hermes",
+  "supports_tool_calling": true,
+  "supports_browser": true,
+  "supports_subagents": true,
+  "supports_pause_resume": false,
+  "supports_streaming": true,
+  "supports_sandbox": true,
+  "supports_interaction_intent": true,
+  "supports_redacted_trace": true
+}
+```
+
+Executor Capability 只能用于 Runtime 路由和治理判断，不能代替 ToolDefinition、Permission、Approval 或 outcome_spec。
+
+#### Model Capability
+
+`ModelCapability` 属于：
+
+```text
+Agent Harness / Model Adapter ↔ Model
+```
+
+它描述某个模型的原生能力和限制，由 Hermes Harness 或 Foundation Model Adapter 管理。
+
+示例：
+
+```json
+{
+  "provider": "example",
+  "model": "example-reasoning-model",
+  "vision": true,
+  "native_tool_calling": true,
+  "parallel_tool_calls": false,
+  "structured_output": true,
+  "system_prompt": true,
+  "max_context_tokens": 128000,
+  "max_output_tokens": 8192,
+  "reasoning_mode": "native"
+}
+```
+
+Model Capability 可以影响 executor 内部的模型选择、prompt 组装、工具调用格式和结构化输出策略，但不能直接决定 AstraOS 任务是否允许执行、是否需要审批、是否可以写入业务系统。
+
+Hermes 模型适配边界：
+
+- Hermes 可以统一不同模型的请求字段、响应字段、tool call 格式、streaming chunk、错误码和重试包装。
+- Hermes 可以对上层暴露统一 `run` 接口，并在 Harness 内部通过 Model Capability 声明模型能力。
+- 模型接入 API key 和 adapter 只代表可以发请求，不代表可直接用于所有任务。
+- 模型必须声明是否支持 tools、streaming、vision、JSON schema、system prompt、上下文长度、最大输出和 reasoning mode。
+- 新模型必须通过 smoke test / eval 后才进入可用模型列表。
+- Hermes 不能消除模型能力、推理质量、工具调用稳定性、JSON 遵循能力、延迟和成本差异。
 
 Workflow Definition 要求：
 
@@ -270,7 +763,7 @@ skipped
 - 必须写入最小 `resume_payload`。
 - 必须能解释等待原因。
 
-## 9. Tool Definition
+## 10. Tool Definition
 
 Tool 是 Runtime 的受控执行单元。所有业务写入必须通过 Tool 或 Domain Service，不允许 Agent / LLM 直接写表。
 
@@ -315,9 +808,21 @@ external  调用外部系统、发送邮件、支付、下单等
 | `write` | 是 | 是 | 是 |
 | `external` | 是 | 是 | 是 |
 
-## 10. Permission / Approval / Audit
+外部 Agent Runtime 工具代理要求：
 
-Permission、Approval、Audit 是 Runtime 内部能力。
+- Hermes 等外部 runtime 只能看到由 AstraOS 暴露的 tool facade。
+- `allowed_tool_keys` 仅用于限制外部 runtime 可请求的工具范围；每次实际调用仍必须经过 AstraOS ToolDefinition、Permission、Approval、Idempotency 和 Audit 检查。
+- tool facade 必须与 ToolDefinition 一一对应，不能暴露内部 domain service。
+- 外部 runtime 的工具请求必须写入 ToolCall / Audit 记录。
+- 工具治理按“是否触达 AstraOS 业务资源或外部副作用”划边界，不按任务语义划边界。
+- 外部 runtime 发出的所有 AstraOS 业务工具调用都必须统一回到 AstraOS ToolAction / Permission / Approval / Idempotency / Audit 流程。
+- Hermes 仅可在自身 Harness 内部使用封闭执行能力；这些能力不得触达 AstraOS 业务资源，也不得产生外部业务副作用。
+- 外部 runtime 请求 `write` 或 `external` 级工具时，必须先进入 `waiting_for_approval`，用户批准后才能继续。
+- 外部 runtime 的自生成 skill 不能自动注册为 AstraOS ToolDefinition；必须经过开发者或管理员审核。
+
+## 11. Permission / Approval / Audit
+
+Permission 和 Approval 属于 AstraOS Governance Harness Services；Managed Runtime 负责在 Task 生命周期中协调其等待、恢复和失败语义。Audit 是独立横切能力，记录 Control Plane、Governance Harness Services、Managed Runtime 和 Executor 的关键行为。
 
 Permission 要求：
 
@@ -330,17 +835,22 @@ Approval 要求：
 
 - 高风险写入、外部动作、不可逆操作前必须暂停。
 - 审批卡片使用业务语言展示即将发生的动作。
+- 审批必须通过 `InteractionRequest(kind = "approval")` 暴露给 Workspace。
+- 用户审批结果必须保存为 `InteractionResponse` 后才能 resume。
 - 用户批准后 Runtime resume。
 - 用户拒绝后 Task 进入可解释失败或替代路径。
 
 Audit 要求：
 
 - 记录 Task 为什么这么决策。
+- 记录为什么创建 InteractionRequest、展示给用户的可见内容快照、用户提交的 InteractionResponse 和 resume 结果。
 - 记录 Runtime 为什么暂停、如何恢复。
 - 记录 Tool 输入输出的脱敏快照。
 - 记录副作用是否已经提交。
+- 记录 ExternalAgentExecutor 的后端类型、版本、输入上下文摘要、输出摘要、工具请求和失败原因。
+- 外部 Agent Runtime 的原始 trace 只进入 Console / Admin 调试域，不进入普通 Workspace 主路径。
 
-## 11. TaskResult
+## 12. TaskResult
 
 TaskResult 是产品验收对象，不是内部 Run Trace。
 
@@ -365,7 +875,7 @@ type TaskResult = {
 - Workspace 展示 TaskResult / Result，而不是展示 Run Trace。
 - 失败结果必须说明原因和下一步建议。
 
-## 12. Foundation 依赖
+## 13. Foundation 依赖
 
 ```text
 Foundation
@@ -378,18 +888,30 @@ Foundation
   └── Queue
 ```
 
-Runtime 不重新实现这些基础设施，只通过清晰接口使用它们。
+AstraOS 不重新实现这些基础设施，只通过清晰接口使用它们。
 
 Queue 主要负责 Background Job、Retry、Resume Event、Delayed Task。
 
-## 13. MVP 实现顺序
+Hermes 等外部 Agent Runtime 属于 Runtime Adapter / Executor Backend / Foundation 之间的可选依赖。AstraOS 可以复用它们的 agent loop、memory、skill、sandbox、模型适配和工具生态，但不能把 RuntimeInvocation、Permission、Approval、Audit、TaskResult 的控制权转移给外部依赖。
+
+实现取舍：
+
+- AstraOS 自研 Managed Runtime。
+- AstraOS 不在 MVP 自研复杂 Agent Runtime 本体。
+- ExternalAgentExecutor 只负责适配、约束、事件归一化和结果回收。
+- Hermes POC 必须证明外部 runtime 可替换；不能让 AstraOS 的核心任务状态依赖 Hermes 私有 session 或 trace。
+
+## 14. MVP 实现顺序
 
 1. TaskRequest / TaskDecision / RuntimeInvocation / TaskResult。
-2. DirectAnswerExecutor。
-3. ClarificationExecutor。
-4. ToolDefinition + ToolActionExecutor。
-5. Permission / Approval pause-resume。
-6. Audit 记录。
-7. WorkflowExecutor。
+2. InteractionRequest / InteractionResponse / Workspace View Model。
+3. DirectAnswerExecutor。
+4. ClarificationExecutor。
+5. ToolDefinition + ToolActionExecutor。
+6. Permission / Approval pause-resume。
+7. Audit 记录。
+8. ExternalAgentExecutor 接口定义：定义受控输入、工具代理、执行事件、Interaction Intent、候选结果和失败映射，production 默认关闭。
+9. ExternalAgentExecutor POC：在 Permission / Approval / Audit / Idempotency 可用后，以 Hermes 作为可替换执行后端验证适配边界。
+10. WorkflowExecutor。
 
 WorkflowExecutor 放在后面实现，避免 MVP 被 Workflow 复杂度拖慢。
