@@ -11,6 +11,7 @@ os.environ["DATABASE_URL"] = os.environ.get(
     "ASTRAOS_TEST_DATABASE_URL",
     "postgresql+asyncpg://astraos:astraos@localhost:55432/astraos_test",
 )
+os.environ["EMAIL_VERIFICATION_ENABLED"] = "true"
 
 
 def _parse_database_url(database_url: str) -> tuple[str, int, str, str, str]:
