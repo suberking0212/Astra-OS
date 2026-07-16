@@ -1,18 +1,20 @@
 "use client";
 
 import {
-  ArrowUp,
   Brain,
-  Clock3,
   LoaderCircle,
   LogOut,
-  Plus,
-  Sparkles,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
+import { WorkspaceOverview } from "@/features/workspace/components/workspace-overview";
+import type {
+  HistoryTaskView,
+  TaskComposerView,
+  WorkspaceUnavailableView,
+} from "@/features/workspace/contract/view-model";
 import { ApiError, getMe, type AuthUser } from "@/lib/api-client";
 import { clearStoredSession, getStoredSession, saveSession } from "@/lib/auth";
 import { routes } from "@/lib/routes";
@@ -22,6 +24,29 @@ export function WorkspaceDetail() {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const unavailableView: WorkspaceUnavailableView = {
+    title: "Task experience is not connected yet",
+    description:
+      "This production workspace already uses the Task-first shell, but task submission, interactions, progress, and results are still waiting for the formal presentation contract phases.",
+    note:
+      "Phase 1 keeps the production route honest: the structure is visible, while the real Task capability stays explicitly unavailable until later phases connect it.",
+  };
+
+  const composerView: TaskComposerView = {
+    currentRequirement: "Keep the production workspace explicit about Task capability being unavailable.",
+    placeholder: "Task submission will be enabled after the Workspace contract is implemented.",
+    prefill: "",
+    suggestedPrompts: [],
+    supportsAttachments: false,
+    disabled: true,
+    disabledReason:
+      "Task submission remains disabled in production until the formal Workspace presentation contract is connected in later phases.",
+    submitLabel: "Submit task unavailable",
+    addContextLabel: "Add context unavailable",
+  };
+
+  const history: HistoryTaskView[] = [];
 
   const handleUnauthorized = useCallback((err: unknown) => {
     if (err instanceof ApiError && err.status === 401) {
@@ -98,19 +123,6 @@ export function WorkspaceDetail() {
         </aside>
 
         <section className="agent-work-main">
-          <header className="agent-work-top">
-            <div className="agent-task-title" id="workspace-title">
-              <Brain className="icon" aria-hidden="true" />
-              Astra Workspace
-            </div>
-            <div className="agent-top-actions">
-              <div className="agent-credit-pill" aria-label="Workspace status">
-                <Clock3 className="icon" aria-hidden="true" />
-                Workspace shell
-              </div>
-            </div>
-          </header>
-
           {isLoading ? (
             <div className="empty-state">
               <LoaderCircle className="icon spin" aria-hidden="true" />
@@ -119,53 +131,14 @@ export function WorkspaceDetail() {
           ) : error ? (
             <div className="form-alert error">{error}</div>
           ) : (
-            <>
-              <section className="agent-conversation" aria-label="Workspace baseline">
-                <div className="agent-run-feed workspace-task-surface">
-                  <div className="agent-thinking-card">
-                    <div className="agent-thinking-head">
-                      <div className="agent-thinking-title">
-                        <Sparkles className="icon" aria-hidden="true" />
-                        <span>Task experience is not connected yet</span>
-                      </div>
-                    </div>
-                    <div className="agent-thinking-body">
-                      <p>
-                        This production workspace is currently a single entry shell. Task submission, interactions,
-                        progress, and results will be connected through the formal Workspace presentation contract in
-                        the next delivery phases.
-                      </p>
-                      <p>You are signed in and ready to continue once the task surface is connected.</p>
-                    </div>
-                  </div>
-                </div>
-              </section>
-
-              <section className="agent-bottom-stack" aria-label="Task composer unavailable">
-                <div className="agent-composer-layer">
-                  <form className="agent-composer">
-                    <label>
-                      <span className="sr-only">Task composer unavailable</span>
-                      <textarea
-                        aria-label="Task composer unavailable"
-                        disabled
-                        placeholder="Task submission will be enabled after the Workspace contract is implemented."
-                        rows={3}
-                      />
-                    </label>
-                    <div className="agent-composer-footer">
-                      <button className="agent-composer-plus" type="button" disabled aria-label="Add context unavailable">
-                        <Plus className="icon" aria-hidden="true" />
-                      </button>
-                      <span className="agent-composer-spacer" />
-                      <button className="agent-send" type="button" disabled aria-label="Submit task unavailable">
-                        <ArrowUp className="icon" aria-hidden="true" />
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              </section>
-            </>
+            <WorkspaceOverview
+              workspaceName="Astra Workspace"
+              statusLabel="Workspace shell"
+              task={null}
+              history={history}
+              composer={composerView}
+              unavailable={unavailableView}
+            />
           )}
         </section>
       </section>

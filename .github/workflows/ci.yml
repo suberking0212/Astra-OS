@@ -1,0 +1,98 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - workspace-main
+      - "codex/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  web-and-docs:
+    name: Web and docs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.7.0
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install JavaScript dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check documentation consistency
+        run: pnpm docs:check
+
+      - name: Check rebuilt baseline boundaries
+        run: pnpm baseline:check
+
+      - name: Lint web application
+        run: pnpm lint
+
+      - name: Type-check web application
+        run: pnpm typecheck
+
+      - name: Verify cold build directory
+        run: test ! -d apps/web/.next
+
+      - name: Build web application from a clean checkout
+        run: pnpm --filter @astraos/web build
+
+  api:
+    name: API
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: astraos
+          POSTGRES_PASSWORD: astraos
+          POSTGRES_DB: astraos
+        ports:
+          - 55432:5432
+        options: >-
+          --health-cmd "pg_isready -U astraos -d astraos"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      ASTRAOS_TEST_DATABASE_URL: postgresql+asyncpg://astraos:astraos@localhost:55432/astraos_test
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up uv and Python
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.9.28"
+          python-version: "3.12"
+          enable-cache: true
+
+      - name: Install API dependencies
+        working-directory: services/api
+        run: uv sync --locked --extra dev
+
+      - name: Check API lock file
+        working-directory: services/api
+        run: uv lock --check
+
+      - name: Run API tests
+        working-directory: services/api
+        run: uv run --locked --extra dev pytest

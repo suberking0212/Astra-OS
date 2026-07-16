@@ -1,105 +1,20 @@
-export type TaskUiStatus =
-  | "idle"
-  | "thinking"
-  | "running"
-  | "needs_context"
-  | "needs_approval"
-  | "completed"
-  | "failed"
-  | "cancelled";
-
-export type ConversationMessageView = {
-  id: string;
-  role: "user" | "assistant" | "system";
-  kind: "message" | "thinking" | "context_request" | "approval" | "result";
-  title: string | null;
-  body: string;
-  createdAt: string;
-};
-
-export type TaskTimelineItemView = {
-  id: string;
-  label: string;
-  description: string;
-  status: "pending" | "active" | "done" | "blocked" | "failed";
-  timestamp: string | null;
-};
-
-export type TaskTimelineView = {
-  taskId: string;
-  items: TaskTimelineItemView[];
-};
-
-export type AttentionFieldView = {
-  id: string;
-  label: string;
-  value: string;
-};
-
-export type ContextRequestFormView = {
-  id: string;
-  title: string;
-  description: string;
-  fields: AttentionFieldView[];
-  submitLabel: string;
-};
-
-export type ApprovalCardView = {
-  id: string;
-  title: string;
-  description: string;
-  riskLevel: "low" | "medium" | "high";
-  businessImpact: string;
-  approveLabel: string;
-  rejectLabel: string;
-};
-
-export type ResultSummaryView = {
-  id: string;
-  title: string;
-  summary: string;
-  objects: Array<{
-    label: string;
-    value: string;
-  }>;
-  nextActions: string[];
-};
+import type {
+  HistoryTaskView,
+  TaskComposerView,
+  WorkspacePreviewStateView,
+  WorkspaceTaskView,
+} from "@/features/workspace/contract/view-model";
 
 export type WorkspacePhase1Preview = {
   workspace: {
     id: string;
     name: string;
   };
-  composer: {
-    placeholder: string;
-    suggestedPrompts: string[];
-    acceptsAttachments: boolean;
-    disabledReason: string | null;
-  };
-  activeTask: {
-    id: string;
-    title: string;
-    userIntent: string;
-    status: TaskUiStatus;
-    statusLabel: string;
-    progressSummary: string;
-    startedAt: string;
-    updatedAt: string;
-  };
-  conversation: ConversationMessageView[];
-  timeline: TaskTimelineView;
-  contextRequest: ContextRequestFormView;
-  approval: ApprovalCardView;
-  riskNotice: string;
-  result: ResultSummaryView;
-  failureState: {
-    title: string;
-    body: string;
-  };
-  cancelState: {
-    title: string;
-    body: string;
-  };
+  statusLabel: string;
+  previewStates: WorkspacePreviewStateView[];
+  composer: TaskComposerView;
+  activeTask: WorkspaceTaskView;
+  history: HistoryTaskView[];
 };
 
 export const phase1WorkspacePreview: WorkspacePhase1Preview = {
@@ -107,202 +22,234 @@ export const phase1WorkspacePreview: WorkspacePhase1Preview = {
     id: "ws_demo",
     name: "Acme Workspace",
   },
+  statusLabel: "Phase 1 Preview",
+  previewStates: [
+    {
+      id: "state_context",
+      label: "needs_context",
+      status: "needs_context",
+      summary: "Requires customer details.",
+    },
+    {
+      id: "state_approval",
+      label: "needs_approval",
+      status: "needs_approval",
+      summary: "Requires approval before follow-up.",
+    },
+    {
+      id: "state_completed",
+      label: "completed",
+      status: "completed",
+      summary: "Reply and result are ready.",
+    },
+    {
+      id: "state_failed",
+      label: "failed",
+      status: "failed",
+      summary: "Missing customer message prevents drafting.",
+    },
+    {
+      id: "state_cancelled",
+      label: "cancelled",
+      status: "cancelled",
+      summary: "Task stopped before any side effect.",
+    },
+  ],
   composer: {
-    placeholder: "Describe your task to get started...",
+    currentRequirement: "Delegate one customer support task without exposing Runtime internals.",
+    placeholder: "Describe the customer issue, desired outcome, and any known constraints.",
+    prefill: "帮我处理这个客户投诉。客户说上周下单的设备没有收到，而且语气很着急。",
     suggestedPrompts: [
-      "Summarize this customer conversation",
-      "Draft a reply for this support case",
-      "Create a follow-up task from these notes",
+      "Summarize the customer complaint",
+      "Draft a customer-facing reply",
+      "Prepare a support follow-up suggestion",
     ],
-    acceptsAttachments: true,
+    supportsAttachments: true,
+    disabled: false,
     disabledReason: null,
+    submitLabel: "Submit task",
+    addContextLabel: "Add context",
   },
   activeTask: {
     id: "task_demo_001",
-    title: "Draft a reply for a customer issue",
-    userIntent:
-      "Help me respond to a customer who says last week's device order never arrived and sounds urgent.",
+    title: "Customer complaint reply and follow-up suggestion",
+    userIntent: "Help me respond to a customer who says last week's device order never arrived and sounds urgent.",
     status: "needs_approval",
-    statusLabel: "Waiting for your confirmation",
+    statusLabel: "Needs your attention",
     progressSummary:
-      "AstraOS has collected the customer details, drafted a reply, and is asking before creating a follow-up item.",
-    startedAt: "2026-07-14T10:00:00Z",
-    updatedAt: "2026-07-14T10:06:00Z",
+      "AstraOS has understood the complaint, collected key details, prepared a reply draft, and is waiting before creating a support follow-up item.",
+    updatedAt: "Updated 10:06",
+    understanding: [
+      "The customer is reporting a missing delivery and expects a timely response.",
+      "The reply should acknowledge urgency without promising an unverified shipping outcome.",
+      "A support follow-up item may help the team verify the order and continue the case.",
+    ],
+    facts: [
+      { label: "Customer email", value: "alex@example.com" },
+      { label: "Order number", value: "ACME-10492" },
+      { label: "Priority", value: "Urgent" },
+      { label: "Preferred tone", value: "Calm and apologetic" },
+    ],
+    progress: {
+      summary: "The current product shape explains progress in business language rather than Runtime events.",
+      currentStep: "Waiting for follow-up approval",
+      completedSteps: 4,
+      totalSteps: 5,
+      updatedAt: "10:06",
+      items: [
+        {
+          id: "timeline_001",
+          label: "Task understood",
+          description: "AstraOS identified the customer issue and the expected business outcome.",
+          status: "completed",
+          timestamp: "10:01",
+        },
+        {
+          id: "timeline_002",
+          label: "Context added",
+          description: "Customer email, order number, priority, and tone were gathered.",
+          status: "completed",
+          timestamp: "10:03",
+        },
+        {
+          id: "timeline_003",
+          label: "Reply drafted",
+          description: "A customer-facing draft was prepared in an empathetic tone.",
+          status: "completed",
+          timestamp: "10:04",
+        },
+        {
+          id: "timeline_004",
+          label: "Approval requested",
+          description: "AstraOS is asking before creating a support follow-up item.",
+          status: "running",
+          timestamp: "10:05",
+        },
+        {
+          id: "timeline_005",
+          label: "Result delivered",
+          description: "The final result will include the reply, the risk note, and the next actions.",
+          status: "pending",
+          timestamp: null,
+        },
+      ],
+    },
+    interactions: [
+      {
+        id: "interaction_input_001",
+        taskId: "task_demo_001",
+        kind: "input",
+        title: "Provide missing customer details",
+        body: "These details let AstraOS prepare a more useful reply and decide whether follow-up is needed.",
+        fields: [
+          {
+            key: "customer_email",
+            label: "Customer email",
+            type: "text",
+            required: true,
+            placeholder: "alex@example.com",
+            value: "alex@example.com",
+          },
+          {
+            key: "order_number",
+            label: "Order number",
+            type: "text",
+            required: true,
+            placeholder: "ACME-10492",
+            value: "ACME-10492",
+          },
+        ],
+        options: [],
+        actions: [
+          { action: "submit", label: "Continue", emphasis: "primary" },
+          { action: "cancel", label: "Cancel task", emphasis: "secondary" },
+        ],
+        riskLevel: "none",
+        expiresAt: null,
+        statusLabel: "needs_context",
+        responseSummary: "In the preview, the required context has already been filled to show the next state.",
+      },
+      {
+        id: "interaction_approval_001",
+        taskId: "task_demo_001",
+        kind: "approval",
+        title: "Create a support follow-up item?",
+        body: "AstraOS will save the customer email, order number, and issue summary so the support team can continue the case.",
+        fields: [],
+        options: [],
+        actions: [
+          { action: "approve", label: "Approve action", emphasis: "primary" },
+          { action: "reject", label: "Reject for now", emphasis: "danger" },
+        ],
+        riskLevel: "medium",
+        expiresAt: null,
+        statusLabel: "needs_approval",
+        emphasisNote:
+          "Shipping status is not confirmed yet. The reply should avoid promising a delivery date until support verifies the order.",
+      },
+    ],
+    result: {
+      status: "succeeded",
+      resultType: "customer_support_reply",
+      title: "Customer reply and follow-up ready",
+      summary:
+        "A calm apology, a verification request, and a prepared internal follow-up are ready for review.",
+      businessObjects: [
+        {
+          type: "reply_draft",
+          id: "reply_001",
+          label: "Customer reply draft",
+          url: null,
+          value:
+            "Thanks for flagging this. I am sorry the device has not arrived yet. We are checking the order now and will follow up with the next update as soon as possible.",
+        },
+        {
+          type: "support_follow_up",
+          id: "follow_up_001",
+          label: "Prepared follow-up",
+          url: null,
+          value: "Support follow-up item for alex@example.com, order ACME-10492, urgent delivery complaint.",
+        },
+        {
+          type: "risk_note",
+          id: "risk_001",
+          label: "Risk note",
+          url: null,
+          value: "Do not promise a replacement or exact delivery time before the order is verified.",
+        },
+      ],
+      nextActions: [
+        "Send the reply draft to the customer.",
+        "Confirm the order status with support.",
+        "Update the customer when shipping information is verified.",
+      ],
+      failureReason: null,
+    },
   },
-  conversation: [
+  history: [
     {
-      id: "msg_user_001",
-      role: "user",
-      kind: "message",
-      title: null,
-      body:
-        "帮我处理这个客户投诉。客户说上周下单的设备没有收到，而且语气很着急。",
-      createdAt: "10:00",
+      id: "history_001",
+      title: "Missing message prevented drafting",
+      status: "failed",
+      summary: "AstraOS could not prepare a reliable reply because the customer message was missing.",
+      updatedAt: "Earlier failure sample",
+      resultStatus: "failed",
     },
     {
-      id: "msg_assistant_001",
-      role: "assistant",
-      kind: "message",
-      title: null,
-      body:
-        "我会先判断问题类型、整理客户诉求，再准备一份可直接发送的回复草稿。",
-      createdAt: "10:01",
+      id: "history_002",
+      title: "Task cancelled before follow-up",
+      status: "cancelled",
+      summary: "The task was stopped before any support follow-up or customer-facing reply was created.",
+      updatedAt: "Cancellation sample",
+      resultStatus: "cancelled",
     },
     {
-      id: "msg_assistant_002",
-      role: "assistant",
-      kind: "context_request",
-      title: "More information needed",
-      body:
-        "我还需要订单号或客户邮箱，才能确认是否要创建后续跟进事项。",
-      createdAt: "10:02",
-    },
-    {
-      id: "msg_system_001",
-      role: "system",
-      kind: "thinking",
-      title: "Reasoning preview",
-      body:
-        "客户的问题包含物流状态不明和情绪安抚两部分。我会优先生成一段可直接发送的回复，并建议创建一个内部跟进事项。",
-      createdAt: "10:04",
-    },
-    {
-      id: "msg_assistant_003",
-      role: "assistant",
-      kind: "approval",
-      title: "Confirm follow-up",
-      body:
-        "是否创建一个 Support follow-up item？这会保存客户邮箱、订单号和问题摘要，供支持团队后续处理。",
-      createdAt: "10:05",
-    },
-    {
-      id: "msg_assistant_004",
-      role: "assistant",
-      kind: "result",
-      title: "Task result",
-      body:
-        "客户回复草稿已准备好，并附带建议的跟进事项、风险说明和下一步建议。",
-      createdAt: "10:06",
+      id: "history_003",
+      title: "Refund clarification completed",
+      status: "completed",
+      summary: "A previous refund request was completed after the customer confirmed the order details.",
+      updatedAt: "Completed sample",
+      resultStatus: "succeeded",
     },
   ],
-  timeline: {
-    taskId: "task_demo_001",
-    items: [
-      {
-        id: "timeline_001",
-        label: "Request understood",
-        description: "Identified the customer issue and the desired outcome.",
-        status: "done",
-        timestamp: "10:01",
-      },
-      {
-        id: "timeline_002",
-        label: "Customer details collected",
-        description: "Captured email, order number, priority, and preferred tone.",
-        status: "done",
-        timestamp: "10:03",
-      },
-      {
-        id: "timeline_003",
-        label: "Reply drafted",
-        description: "Prepared a customer-facing response with an empathetic tone.",
-        status: "done",
-        timestamp: "10:04",
-      },
-      {
-        id: "timeline_004",
-        label: "Follow-up task ready",
-        description: "Waiting for confirmation before creating the support follow-up item.",
-        status: "active",
-        timestamp: "10:05",
-      },
-      {
-        id: "timeline_005",
-        label: "Result ready",
-        description: "The final reply, risk note, and next steps are ready to review.",
-        status: "pending",
-        timestamp: null,
-      },
-    ],
-  },
-  contextRequest: {
-    id: "context_001",
-    title: "Add customer details",
-    description:
-      "These fields let AstraOS prepare a useful reply and decide whether a support follow-up is needed.",
-    submitLabel: "Continue",
-    fields: [
-      {
-        id: "field_email",
-        label: "Customer email",
-        value: "alex@example.com",
-      },
-      {
-        id: "field_order",
-        label: "Order number",
-        value: "ACME-10492",
-      },
-      {
-        id: "field_priority",
-        label: "Priority",
-        value: "Urgent",
-      },
-      {
-        id: "field_tone",
-        label: "Preferred tone",
-        value: "Calm and apologetic",
-      },
-    ],
-  },
-  approval: {
-    id: "approval_001",
-    title: "Create a support follow-up item?",
-    description:
-      "AstraOS will create a support follow-up item containing the customer email, order number, and issue summary.",
-    riskLevel: "medium",
-    businessImpact:
-      "The support team will receive a follow-up item tied to this customer complaint.",
-    approveLabel: "Looks good",
-    rejectLabel: "Not now",
-  },
-  riskNotice:
-    "Shipping status is not confirmed yet. The reply should avoid promising a delivery date until the support team verifies the order.",
-  result: {
-    id: "result_001",
-    title: "Customer reply and follow-up ready",
-    summary:
-      "A calm apology, a request for verification, and a prepared internal follow-up are ready for review.",
-    objects: [
-      {
-        label: "Customer reply draft",
-        value:
-          "Thanks for flagging this. I am sorry the device has not arrived yet. We are checking the order now and will follow up with the next update as soon as possible.",
-      },
-      {
-        label: "Prepared follow-up",
-        value:
-          "Support follow-up item for alex@example.com, order ACME-10492, urgent delivery complaint.",
-      },
-      {
-        label: "Risk note",
-        value:
-          "Do not promise a replacement or exact delivery time before the order is verified.",
-      },
-    ],
-    nextActions: [
-      "Send the reply draft to the customer.",
-      "Confirm the order status with support.",
-      "Update the customer when shipping information is verified.",
-    ],
-  },
-  failureState: {
-    title: "Could not continue",
-    body:
-      "AstraOS could not prepare a reliable reply because the customer message was missing. Add the message and try again.",
-  },
-  cancelState: {
-    title: "Task cancelled",
-    body:
-      "The task was stopped before creating any support follow-up or customer-facing reply.",
-  },
 };
