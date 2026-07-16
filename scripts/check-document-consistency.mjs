@@ -104,6 +104,14 @@ assertContains(runtime, "Direct Human Routing", "Runtime specification does not 
 assertContains(runtime, "Approval 只改变受治理动作是否允许继续", "Runtime specification conflates approval with human execution");
 assertNotContains(phased, "tool_action_runtime");
 assertContains(phased, "RuntimeInvocation(invocation_type = human)", "Phase plan does not include direct human routing");
+assertContains(phased, "Phase 1 只实现产品形态、语义草案和隔离 Preview");
+assertContains(phased, "正式建立或冻结 `WorkspaceTaskRepository`");
+assertContains(phased, "实现完整 Mock Interaction Runtime、通用 schema-driven Interaction Renderer");
+assertContains(
+  phased,
+  "Gate 1 不以 `WorkspaceTaskRepository`、通用 Interaction Renderer、Mock Runtime、OpenAPI 或 contract tests 已完成为验收条件",
+);
+assertContains(phased, "Phase 2 正式承接 Phase 1 只预留的 Repository composition seam");
 assertContains(phased, "产品 MVP Exit", "Phase plan does not define Gate 4 as the MVP exit");
 assertContains(phased, "真实 Human Work assignment、claim、reassign、SLA 和结果回收属于 `[DEFERRED]`", "Phase plan does not defer real human work assignment");
 assertContains(phased, "范围标记：`[POST-MVP-P5]`", "Phase 5 is not marked Post-MVP");

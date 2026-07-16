@@ -6,7 +6,7 @@
 
 当前所有旧实现、旧 Preview、旧启动文案和旧 Phase 标记都视为重构前遗留资产。它们可以被盘点、复用或删除，但不能作为新 Phase 已完成的证据。
 
-主架构以 `ARCHITECTURE_BASELINE.md` 为准。MVP 与长期能力的实施深度以 `MVP_SCOPE_AND_LONG_TERM_ROADMAP.md` 为准。任务展示语义以 `TASK_PRESENTATION_CONTRACT.md` 为准。Runtime 规格以 `RUNTIME_REMEDIATION_SPEC.md` 为准。Workspace 视觉边界以 `WORKSPACE_VISUAL_BASELINE.md` 为准。本文件只定义阶段、依赖关系、交付物和验收 Gate。
+主架构以 `ARCHITECTURE_BASELINE.md` 为准。MVP 与长期能力的实施深度以 `MVP_SCOPE_AND_LONG_TERM_ROADMAP.md` 为准。任务展示语义以 `TASK_PRESENTATION_CONTRACT.md` 为准。Runtime 规格以 `RUNTIME_REMEDIATION_SPEC.md` 为准。Workspace 视觉边界以 `WORKSPACE_VISUAL_BASELINE.md` 为准。本文件只定义阶段、依赖关系、交付物和验收 Gate，不得把路线图中的 `[MVP-P2]`、`[MVP-CONTRACT]`、`[POST-MVP-P5]` 或 `[DEFERRED]` 能力提前列为 Phase 1 必选实现。
 
 ## 1. 当前状态
 
@@ -239,6 +239,7 @@ delete     与新架构冲突或会误导开发
 
 #### 本 Phase 参考文档
 
+- `MVP_SCOPE_AND_LONG_TERM_ROADMAP.md`：范围权威，限定 Phase 1 只实现产品形态、语义草案和隔离 Preview，不建立完整 Mock 闭环或冻结公开工程契约。
 - `WORKSPACE_VISUAL_BASELINE.md`：主参考，约束 Workspace 产品形态、视觉和交互边界。
 - `TASK_PRESENTATION_CONTRACT.md`：主参考，定义用户可见任务状态、Interaction 和 Result 语义。
 - `ARCHITECTURE_BASELINE.md`：确认 Workspace 不消费 Runtime / Executor 内部对象和 trace。
@@ -253,16 +254,15 @@ Needs Attention
 Result / History
 ```
 
-必须覆盖的用户状态：
+Customer Support 样片必须覆盖的用户语义：
 
-- 提交任务。
-- 系统理解和处理任务。
-- 补充上下文或文件。
-- 选择或确认。
-- 审批有风险的业务动作。
-- 查看进度但不查看内部 trace。
-- 从失败中恢复。
-- 接收最终结果。
+- Task 委托与系统理解摘要。
+- 补充上下文。
+- Approval 的产品展示和 approve / reject 选择。
+- Result、failure 和 cancellation。
+- 用户可理解的业务进度，但不展示内部 trace。
+
+`selection`、`confirmation`、`file_request`、`progress` 和 `error_recovery` 可以在语义草案或静态样片中表达，但不要求 Phase 1 完成通用 renderer、动作回写或完整状态流转。`takeover`、`authentication` 只保留 Presentation contract / component boundary，不进入 Phase 1 真实业务流程。
 
 ### 5.2 Presentation Contract 草案
 
@@ -286,7 +286,7 @@ InteractionView
 ResultView
 ```
 
-本阶段只冻结语义原则，不冻结最终字段：
+本阶段只确认语义方向并形成可调整草案，不冻结最终字段或正式工程契约：
 
 - 用户可见状态及其含义。
 - Interaction 的类别和用户动作。
@@ -308,7 +308,7 @@ PermissionGrant
 RuntimeAuditEvent
 ```
 
-正式映射方向必须是：
+长期正式映射方向必须是：
 
 ```text
 Runtime DTO / Runtime State
@@ -317,7 +317,7 @@ Runtime DTO / Runtime State
   -> Workspace Components
 ```
 
-`Presentation Projector` 负责把内部状态、权限、审批和执行结果投影为稳定的用户语义；Workspace Components 不负责解释 Runtime 状态机。
+`Presentation Projector` 负责把内部状态、权限、审批和执行结果投影为稳定的用户语义；Workspace Components 不负责解释 Runtime 状态机。Phase 1 只确认这条边界和 View Model 语义，不实现或冻结正式 Presentation Projector；其工程实现、OpenAPI 和 mapping tests 属于 Phase 2。
 
 ### 5.3 产品样片
 
@@ -329,23 +329,24 @@ Runtime DTO / Runtime State
   -> 请求订单号或客户信息
   -> 用户补充信息
   -> 生成回复草稿
-  -> 建议创建工单
+  -> 建议创建 support follow-up item
   -> 展示审批和风险
   -> 用户批准或拒绝
   -> 展示成功、部分成功或失败结果
 ```
 
-样片使用独立 Preview/fixture，不连接真实 Runtime，不进入正式 Workspace 数据源。
+样片使用独立 Preview/fixture，不连接真实 Runtime，不进入正式 Workspace 数据源。样片中的 Approval、提交、恢复和结果只是产品语义演示，不构成真实 Governance、Mock Interaction Runtime 或 Repository 已经实现的证据。
 
 ### 5.4 本阶段允许的前端改动
 
 Phase 1 应开始修改前端，但修改范围限定在产品结构、组件边界和展示契约：
 
-- 可以拆分 Task Composer、Task Timeline、Needs Attention、Interaction 和 Result 组件。
+- 可以拆分 Task Composer、Task Timeline、Needs Attention、Interaction 和 Result 组件，并为通用 Interaction Renderer 预留组件边界。
 - 可以移除正式页面中内嵌的假状态、demo data 和临时 Runtime DTO。
-- 可以建立正式 View Model 和 component props。
+- 可以建立可调整的 View Model 与 component props 草案；Phase 2 验证前不视为正式共享契约。
 - 可以建立 Preview route 和隔离的 fixtures，用于验证完整产品样片。
 - 可以调整正式 Workspace 的信息结构，使其符合 Task-first 产品形态。
+- 可以为后续 Repository 接入预留 composition seam，但正式 Workspace 在 Phase 2 接入前继续显示明确的 Task unavailable 状态。
 
 本阶段不得：
 
@@ -354,6 +355,9 @@ Phase 1 应开始修改前端，但修改范围限定在产品结构、组件边
 - 接入产生真实副作用的 Tool。
 - 提前实现真实 Runtime 状态机、持久化执行或恢复逻辑。
 - 为了配合尚未实现的 Runtime 暴露内部对象到 Workspace。
+- 正式建立或冻结 `WorkspaceTaskRepository`、Mock / API Repository 共同契约或 Repository contract tests；这些属于 Phase 2。
+- 实现完整 Mock Interaction Runtime、通用 schema-driven Interaction Renderer 或完整动作回写状态机；这些属于 Phase 2。
+- 冻结 OpenAPI、Pydantic、TypeScript View Model、Presentation Projector 或正式 API endpoint。
 
 ### 5.5 Gate 1 验收
 
@@ -362,6 +366,8 @@ Phase 1 应开始修改前端，但修改范围限定在产品结构、组件边
 - 至少覆盖 completed、needs_context、needs_approval、failed 和 cancelled。
 - Presentation Contract 草案能表达样片中的所有交互和恢复路径。
 - Workspace 产品形态得到确认，但契约仍允许在 Phase 2 根据验证结果调整。
+- 正式 Workspace 继续与 Preview/fixture 隔离，并对尚未实现的 Task 能力展示明确 unavailable 状态。
+- Gate 1 不以 `WorkspaceTaskRepository`、通用 Interaction Renderer、Mock Runtime、OpenAPI 或 contract tests 已完成为验收条件。
 
 ## 6. Phase 2：Mock 产品闭环验证与 Presentation Contract 冻结
 
@@ -370,6 +376,8 @@ Phase 1 应开始修改前端，但修改范围限定在产品结构、组件边
 用最薄、可替换的 Mock Interaction Runtime 跑通端到端产品闭环，并在实际验证后冻结正式工程契约。
 
 Phase 2 将原“Presentation Contract Freeze”和“API Contract + Shared Types”合并，避免在验证前后重复冻结。
+
+Phase 2 正式承接 Phase 1 只预留的 Repository composition seam、通用 Interaction Renderer 和 Presentation Projector 边界。本阶段才建立 `WorkspaceTaskRepository` Interface、Mock / API Repository 共同契约、完整动作回写、schema-driven rendering 和 contract tests。
 
 #### 本 Phase 参考文档
 

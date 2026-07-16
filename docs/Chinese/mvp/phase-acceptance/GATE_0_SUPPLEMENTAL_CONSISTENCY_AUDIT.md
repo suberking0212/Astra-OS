@@ -103,3 +103,32 @@ Gate 0 重新验收后，再次进行全量文档交叉检查时发现：
 3. 第 5 节要求的文档、基线、语法、diff 和跨文档契约验证均已重新通过。
 
 本补充审计正式生效，但它只补充 Gate 0 的一致性证据，不重新定义原 Gate 0 验收 commit 的历史内容。
+
+## 8. 最终 HEAD 复审
+
+复审日期：2026-07-16
+
+- 复审对象：`628784c21692dfe25abcbe6997094338c4f25881`
+- 复审原因：确认不一致表述修复和补充审计正式化提交完成后，Gate 0 是否仍满足验收与推进条件
+- 复审结论：`accepted`
+- Phase 结论：Phase 0 继续保持 `accepted`；Phase 1 保持 `not_started`，但已经具备正式启动条件
+
+本轮在最终 HEAD 上重新执行：
+
+| 验证 | 结果 |
+| --- | --- |
+| `pnpm docs:check` | 通过 |
+| `pnpm baseline:check` | 通过 |
+| `node --check scripts/check-document-consistency.mjs` | 通过 |
+| `git diff --check` | 通过 |
+| `pnpm lint` | 通过 |
+| `pnpm typecheck` | 通过 |
+| `pnpm --filter @astraos/web build` | 通过；Next.js production build 完成 |
+| `cd services/api && uv lock --check` | 通过 |
+| `cd services/api && .venv/bin/alembic upgrade head` | 通过 |
+| `cd services/api && .venv/bin/pytest` | 14 passed；保留已登记的 Python 3.12 `passlib` / `crypt` deprecation warning |
+| `bash -n scripts/dev.sh` | 通过 |
+
+后端测试首次执行时因本地 PostgreSQL `55432` 未启动而无法建立连接；启动仓库定义的 PostgreSQL 与 Qdrant 后，两个容器均达到 healthy，Alembic 和全部测试通过。该过程证明初次失败属于缺少测试基础设施，不是代码、迁移或测试断言失败。
+
+最终判断：本轮未发现新的架构主权、实施范围、RuntimeInvocation、Human routing、Approval、Interaction contract、Governance、Queue、Phase 顺序或历史证据冲突。Gate 0 验收结论继续有效，可以推进到 Phase 1 的正式启动流程；Phase 1 只有在团队实际开始对应交付后，才应由阶段计划从 `not_started` 更新为 `in_progress`。
