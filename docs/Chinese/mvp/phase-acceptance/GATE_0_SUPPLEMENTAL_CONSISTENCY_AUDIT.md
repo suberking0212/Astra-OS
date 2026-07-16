@@ -7,14 +7,14 @@
 - Phase：Phase 0 — Rebuild Baseline Supplemental Consistency Audit
 - 审计类型：既有 Gate 0 的补充文档与契约审计，不是新的 Phase 验收
 - 分支：`workspace-main`
-- 审计基准 HEAD：`2c632aecd612f043737d6504562f7df48fb0f0d8`
-- 审计对象：上述 HEAD 加本轮未提交的文档与检查脚本修改
-- Commit 绑定：`pending`；本轮修改提交后必须回填最终 commit
-- 当前审计状态：`provisional_pass`
+- 审计前基准 HEAD：`2c632aecd612f043737d6504562f7df48fb0f0d8`
+- 审计内容 commit：`4b91137a221cc598e6ecb5ae01de15f3599eb005`
+- Commit 绑定：`4b91137a221cc598e6ecb5ae01de15f3599eb005`
+- 当前审计状态：`accepted`
 - Gate 状态变化：无；Phase 0 保持 `accepted`，Phase 1 保持 `not_started`
 - 前一正式记录：`GATE_0_REACCEPTANCE.md`
 
-`provisional_pass` 只表示当前工作树已经完成补充审计并通过现有验证，不构成新的正式 Gate accepted 证据。只有回填包含本轮修改的最终 commit，并在该 commit 上重新执行本记录列出的验证后，本记录才能改为 `accepted`。
+本记录的 `accepted` 只表示绑定 commit 中的补充文档与契约一致性审计通过，不创建新的 Phase、不替代原 Gate 0 正式重新验收，也不改变既有 Phase 状态。
 
 ## 2. 审计触发原因
 
@@ -59,7 +59,7 @@ Gate 0 重新验收后，再次进行全量文档交叉检查时发现：
 
 ## 5. 自动与人工验证
 
-当前工作树已执行：
+针对审计内容 commit 已执行：
 
 | 验证 | 当前结果 |
 | --- | --- |
@@ -92,15 +92,14 @@ Gate 0 重新验收后，再次进行全量文档交叉检查时发现：
 
 因此，本补充审计不撤销 Gate 0，不改变 Phase 状态。它补充并收紧 Gate 0 的文档一致性证据。
 
-## 7. 当前结论与正式化条件
+## 7. 最终结论
 
-当前结论：`provisional_pass`。
+正式结论：`accepted`。
 
-正式化条件：
+正式化记录：
 
-1. 将本轮文档和 `scripts/check-document-consistency.mjs` 修改提交到独立 commit。
-2. 将本记录的 Commit 绑定从 `pending` 更新为该 commit 完整 SHA。
-3. 在该 commit 上重新执行第 5 节要求的验证。
-4. 将当前审计状态更新为 `accepted`，并记录最终命令结果。
+1. 本轮文档和 `scripts/check-document-consistency.mjs` 已提交到 `4b91137a221cc598e6ecb5ae01de15f3599eb005`。
+2. 本记录已经绑定该完整 SHA。
+3. 第 5 节要求的文档、基线、语法、diff 和跨文档契约验证均已重新通过。
 
-在完成上述条件前，本记录是可审计的补充检查记录，但不是新的正式 Gate accepted 证据。
+本补充审计正式生效，但它只补充 Gate 0 的一致性证据，不重新定义原 Gate 0 验收 commit 的历史内容。

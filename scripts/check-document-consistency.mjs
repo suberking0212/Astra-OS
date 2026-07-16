@@ -180,8 +180,8 @@ assertContains(
   "docs/Chinese/mvp/phase-acceptance/GATE_0_REACCEPTANCE.md",
   "本记录只证明 commit `0953b8c62b03922e581d9374d6f51ebf0f37798b` 在当次重新验收范围内通过",
 );
-assertContains(supplementalAudit, "当前审计状态：`provisional_pass`");
-assertContains(supplementalAudit, "Commit 绑定：`pending`");
+assertContains(supplementalAudit, "当前审计状态：`accepted`");
+assertContains(supplementalAudit, "Commit 绑定：`4b91137a221cc598e6ecb5ae01de15f3599eb005`");
 assertContains(supplementalAudit, "本补充审计不撤销 Gate 0，不改变 Phase 状态");
 assertContains(phased, "GATE_0_SUPPLEMENTAL_CONSISTENCY_AUDIT.md");
 assertContains("docs/Chinese/mvp/REBUILT_ENGINEERING_BASELINE.md", "GATE_0_SUPPLEMENTAL_CONSISTENCY_AUDIT.md");
