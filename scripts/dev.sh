@@ -32,7 +32,7 @@ require_command() {
 select_python() {
   supports_python_version() {
     local python_bin="$1"
-    "$python_bin" -c 'import sys; raise SystemExit(0 if sys.version_info >= (3, 11) else 1)' >/dev/null 2>&1
+    "$python_bin" -c 'import sys; raise SystemExit(0 if (3, 11) <= sys.version_info < (3, 13) else 1)' >/dev/null 2>&1
   }
 
   resolve_python_candidate() {
@@ -52,7 +52,7 @@ select_python() {
   }
 
   if [ -n "$PYTHON_BIN" ]; then
-    require_command "$PYTHON_BIN" "Set PYTHON_BIN to a Python 3.11+ executable."
+    require_command "$PYTHON_BIN" "Set PYTHON_BIN to a Python 3.11 or 3.12 executable."
   else
     local candidate=""
     local resolved_candidate=""
@@ -85,12 +85,12 @@ select_python() {
   fi
 
   if [ -z "$PYTHON_BIN" ]; then
-    echo "Python 3.11 or newer is required. Set PYTHON_BIN to a compatible executable." >&2
+    echo "Python 3.11 or 3.12 is required. Set PYTHON_BIN to a compatible executable." >&2
     return 1
   fi
 
   supports_python_version "$PYTHON_BIN" || {
-    echo "${PYTHON_BIN} must be Python 3.11 or newer." >&2
+    echo "${PYTHON_BIN} must be Python 3.11 or 3.12." >&2
     return 1
   }
 }

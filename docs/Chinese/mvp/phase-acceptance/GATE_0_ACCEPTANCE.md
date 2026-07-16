@@ -1,20 +1,25 @@
-# Gate 0 正式验收记录
+# Gate 0 原验收记录（已撤销）
 
 验收日期：2026-07-16
+
+当前记录状态：`superseded`
+
+撤销原因：完整文档审计确认产品定位、Account/Control Plane 归属、Governance/Managed Runtime/Audit 主权、`external_agent` RuntimeInvocation、ToolAction Executor 分类和 Presentation View Model 字段冲突在对应实现 commit 中已经存在，因此原“文档之间不存在架构主权冲突”的结论不成立。本文件保留原验收证据和技术债务，只作为历史审计记录。
 
 ## 1. 验收元数据
 
 - Phase：Phase 0 — Rebuild Baseline
 - 对应实现 commit：`d1c3e21f686c292a05988d2b48595bc81eb41504`
 - 分支：`workspace-main`
-- 验收结论：`accepted`
-- 下一阶段状态：Phase 1 解除阻塞，回到 `not_started`
+- 原验收结论：`accepted`
+- 当前记录状态：`superseded`
+- 下一阶段状态：Phase 1 重新阻塞，等待 Gate 0 重新验收
 
 ## 2. Gate 逐项结论
 
 | Gate 0 条件 | 结论 | 证据 |
 | --- | --- | --- |
-| 文档之间不存在架构主权冲突 | 通过 | `REBUILT_ENGINEERING_BASELINE.md` 第 1 节明确五份权威文档的优先级和唯一职责；临时整改文档已降级为历史参考 |
+| 文档之间不存在架构主权冲突 | 原通过，后撤销 | 权威顺序虽然已经定义，但验收时未识别多个当前文档中的实际语义冲突；该条件由后续纠偏和重新验收重新验证 |
 | 所有重构前核心资产都有明确处置结论 | 通过 | `REBUILT_ENGINEERING_BASELINE.md` 第 4 节覆盖 Workspace、Preview、Mock、API、schemas、数据库、shared、client、脚本、README 和历史文档的 keep/migrate/reference/delete 结论 |
 | 正式代码不会被旧 Mock、Preview 或阶段标记静默驱动 | 通过 | 正式 Workspace 不 import mock；本地任务 demo 和 planned API mapping 已移除；Preview 默认关闭；`pnpm baseline:check` 通过 |
 | 团队能回答真实入口、真实数据源和正式契约分别在哪里 | 通过 | `REBUILT_ENGINEERING_BASELINE.md` 第 2 节和 README 明确 Web/API 入口、PostgreSQL 数据表和契约冻结阶段 |
@@ -58,7 +63,7 @@
 | TD-02 | `apps/web/src/styles/globals.css` 体积较大，Workspace 组件和样式耦合 | Phase 1 | Task Composer、Active Task、Needs Attention、Interaction、Result/History 的组件和样式边界完成拆分，不再继续向单一全局文件堆叠 Workspace 状态样式 | Gate 1 前完成 |
 | TD-03 | Preview 的 View 类型仍位于 Mock fixture | Phase 1 | View Model 草案迁移到正式 `features/workspace/contract`，Preview/Mock 与正式组件只共同依赖公开 contract types；Phase 2 再验证并冻结字段 | Gate 1 前完成类型迁移；Gate 2 前完成契约冻结 |
 | TD-04 | 数据库存储对象命名为 `projects`，产品语义使用 Workspace | Phase 2 决策；必要时 Phase 3 迁移 | Gate 2 冻结 API 前明确 `project` 与 `workspace` 的长期映射和兼容规则；若决定改表，通过 Phase 3 前置 Alembic revision 迁移，不直接修改基线 revision | Gate 2 前必须完成命名决策；若需迁移则阻塞 Phase 3 正式实现 |
-| TD-05 | Python 3.12 测试存在 `passlib` 对 `crypt` 的弃用警告，Python 3.13 支持边界不清晰 | Phase 1 | 升级/替换密码哈希依赖，或在 `pyproject.toml`、启动脚本和 README 中统一声明并自动校验受支持 Python 版本；测试不再依赖即将移除的标准库能力 | 最迟 Gate 3 前完成；目标在 Gate 1 前清理 |
+| TD-05 | Python 3.12 测试存在 `passlib` 对 `crypt` 的弃用警告；当前支持范围已明确限制为 Python 3.11/3.12，Python 3.13 暂不支持 | Phase 1 | 升级或替换密码哈希依赖，使测试不再依赖即将移除的标准库能力；完成后再评估 Python 3.13 支持 | 最迟 Gate 3 前完成；目标在 Gate 1 前清理 |
 | TD-06 | `scripts/dev.sh` 的端口兜底清理可能终止占用相同端口的无关进程 | Phase 1 | 优先只清理由 AstraOS PID 文件和命令特征确认的进程；遇到无法确认归属的端口占用时给出诊断并退出，除非用户显式开启强制清理 | 不单独阻塞 Gate 1，但必须在 Gate 2 前完成 |
 | TD-07 | Next.js 曾出现一次 `.next` 内部缓存不一致，清理缓存后重跑通过 | Phase 1 | TD-01 的 CI 从干净构建目录连续稳定通过；本地 build 命令或脚本明确处理损坏缓存，不依赖人工判断 | Gate 1 前完成并通过 CI 证明 |
 
@@ -75,4 +80,4 @@
 
 Gate 0 的架构、代码、数据、文档和运行基线均已建立，旧 Mock、Preview 和阶段标记不会静默驱动正式路径。已知技术债务不构成 Phase 1 的架构阻塞。
 
-正式结论：`accepted`。
+原正式结论为 `accepted`，当前已撤销并标记为 `superseded`。新的 Gate 0 结论只能由独立重新验收记录给出。

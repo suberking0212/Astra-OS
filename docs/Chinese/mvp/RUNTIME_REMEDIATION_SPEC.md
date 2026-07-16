@@ -119,9 +119,9 @@ Spec 架构结构：
 ```
 Astra OS
 ├── Control Plane
-│   ├── User / Organization / Project
 │   ├── AI App / AI Employee
 │   ├── Employee Execution Profile
+│   ├── Business Capability / Outcome Contract
 │   ├── Workflow Definition
 │   ├── Tool / Knowledge / Credential Registry
 │   ├── RBAC / Policy
@@ -288,7 +288,7 @@ MVP 中，这条链路可以由一个 Runtime Service 在单进程内完成。`T
 | --- | --- | --- |
 | Control Plane / Decision | 定义 Employee 能力、策略、权限、审批规则和结果标准 | 直接写表、直接调用 Tool、修改运行状态 |
 | Planning（可选） | 生成用户可理解、Runtime Adapter 可映射的计划 | 把内部 StepRun 原样暴露给用户 |
-| Astra OS Managed Runtime | 状态机、权限执行、审批暂停与恢复、审计、幂等、结果验收 | 把运行控制权交给 Hermes 私有 session 或 trace |
+| Astra OS Managed Runtime | 状态机、治理服务协调、审批等待与恢复、结果验收 | 接管 Permission / Approval / Idempotency / Audit 的主权，或把运行控制权交给 Hermes 私有 session / trace |
 | Runtime Adapter / Executor | 执行、暂停、恢复、重试、超时、归一化事件 | 依赖自由文本 prompt 判断下一步或绕过 Managed Runtime |
 | Tool | 受控读取、写入和外部动作 | 绕过权限、审批、幂等 |
 | TaskResult | 判断 Task 是否真正完成并交付结果 | 用 Run 成功代替 Task 成功 |
@@ -350,11 +350,13 @@ Decision Engine 与 Runtime Adapter 不通过 prompt 文本、业务分支代码
 | `clarification` | 进入等待用户补充信息状态 |
 | `tool_action` | 执行单个受控 Tool，可按风险触发审批 |
 | `workflow` | 创建 WorkflowRun / AppRun 并执行步骤 |
+| `external_agent` | 通过 ExternalAgentExecutor 启动受控外部 Agent Runtime 执行；MVP production 默认关闭 |
 
 校验要求：
 
 - `invocation_type = workflow` 时，`workflow_template_key` 必须存在且已注册。
 - `invocation_type = tool_action` 时，`tool_key` 必须存在且已注册。
+- `invocation_type = external_agent` 时，必须选择已注册且通过 capability / policy 校验的 ExternalAgentExecutor backend。
 - `input` 必须通过对应 Tool 或 Workflow input schema 校验。
 - `permission_grant_ids` 必须属于当前 Task / Workspace / User。
 - `approval_requirements` 必须与 ToolDefinition 或 Workflow Step 的写操作匹配。
@@ -695,7 +697,10 @@ Runtime Adapter ↔ Executor Backend
   "supports_streaming": true,
   "supports_sandbox": true,
   "supports_interaction_intent": true,
-  "supports_redacted_trace": true
+  "supports_redacted_trace": true,
+  "supports_supervised_browser": true,
+  "supports_auth_handoff": true,
+  "supports_structured_result": true
 }
 ```
 
@@ -717,13 +722,15 @@ Agent Harness / Model Adapter ↔ Model
 {
   "provider": "example",
   "model": "example-reasoning-model",
-  "vision": true,
-  "native_tool_calling": true,
-  "parallel_tool_calls": false,
-  "structured_output": true,
-  "system_prompt": true,
-  "max_context_tokens": 128000,
+  "supports_tools": true,
+  "supports_streaming": true,
+  "supports_vision": true,
+  "supports_parallel_tool_calls": false,
+  "supports_json_schema": true,
+  "supports_system_prompt": true,
+  "max_input_tokens": 128000,
   "max_output_tokens": 8192,
+  "tool_call_format": "openai",
   "reasoning_mode": "native"
 }
 ```

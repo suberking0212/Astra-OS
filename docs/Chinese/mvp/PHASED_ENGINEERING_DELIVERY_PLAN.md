@@ -12,8 +12,8 @@
 
 | Phase | 状态 | 说明 |
 | --- | --- | --- |
-| Phase 0 | `accepted` | Gate 0 已通过；验收记录见 `phase-acceptance/GATE_0_ACCEPTANCE.md` |
-| Phase 1 | `not_started` | Gate 0 已通过，等待正式启动 Workspace 产品形态与语义契约草案 |
+| Phase 0 | `in_progress` | 原 Gate 0 验收因文档语义冲突被撤销，正在完成纠偏与重新验收 |
+| Phase 1 | `blocked` | 等待 Gate 0 重新验收通过 |
 | Phase 2 | `blocked` | 等待 Phase 1 验收 |
 | Phase 3 | `blocked` | 等待 Phase 2 验收 |
 | Phase 4 | `blocked` | 等待 Phase 3 验收 |
@@ -648,15 +648,14 @@ Employee Package 至少定义：
 - outcome contract。
 - version。
 
-本阶段允许的 Executor 选择：
+本阶段允许的逻辑 Executor 选择：
 
 ```text
 direct_model_runtime
-tool_action_runtime
 human_executor
 ```
 
-`agent_runtime` 可以保留在 Execution Profile schema 中，但在 Phase 5 验证前不作为生产默认路径。
+`tool_action` 是由 `ToolActionExecutor` 承接的单次受治理调用类型，不是与 Direct Model Runtime、Workflow Runtime、Agent Runtime 或 Human Executor 并列的逻辑 Executor。`agent_runtime` 可以保留在 Execution Profile schema 中，但在 Phase 5 验证前不作为生产默认路径。
 
 ### 8.4 Gate 4 验收
 

@@ -9,7 +9,7 @@
 ## 1. 定位
 
 ```text
-AstraOS = Control Plane + Managed Runtime + Executor Backends
+AstraOS = Control Plane + Governance Harness Services + Managed Runtime + Executor Backends
 Hermes / Agent = Executor Backend
 Workspace = 用户理解任务、参与任务、接收结果的界面
 Interaction Runtime = Managed Runtime 内的用户交互承接层
@@ -215,12 +215,21 @@ type WorkspaceTaskView = {
     | "failed"
     | "cancelled";
   progressSummary: string;
+  progress: TaskProgressView | null;
   interactions: InteractionView[];
   result: ResultView | null;
 };
 ```
 
 ```ts
+type TaskProgressView = {
+  summary: string;
+  currentStep: string | null;
+  completedSteps: number;
+  totalSteps: number | null;
+  updatedAt: string;
+};
+
 type InteractionView = {
   id: string;
   taskId: string;
@@ -233,9 +242,49 @@ type InteractionView = {
   riskLevel: "none" | "low" | "medium" | "high";
   expiresAt: string | null;
 };
+
+type InteractionFieldView = {
+  key: string;
+  label: string;
+  type: "text" | "textarea" | "number" | "date" | "file";
+  required: boolean;
+  placeholder: string | null;
+};
+
+type InteractionOptionView = {
+  value: string;
+  label: string;
+  description: string | null;
+};
+
+type InteractionActionView = {
+  action: "submit" | "select" | "approve" | "reject" | "edit" | "takeover" | "cancel";
+  label: string;
+  emphasis: "primary" | "secondary" | "danger";
+};
+
+type ResultView = {
+  status: "succeeded" | "partially_succeeded" | "failed" | "cancelled";
+  resultType: string;
+  summary: string;
+  businessObjects: BusinessObjectView[];
+  nextActions: string[];
+  failureReason: string | null;
+};
+
+type BusinessObjectView = {
+  type: string;
+  id: string;
+  label: string;
+  url: string | null;
+};
 ```
 
-前端按 `kind / schema / actions` 渲染通用组件：
+以上字段是 Phase 1 语义草案；在 Phase 2 的 Mock 闭环、OpenAPI、Pydantic、TypeScript 和 contract tests 验证完成前不构成冻结契约。
+
+Presentation Projector 先把 Runtime `InteractionRequest.schema / payload` 转换为
+`InteractionView.fields / options / actions`。前端只按
+`kind / fields / options / actions / riskLevel` 渲染通用组件：
 
 ```text
 input           -> schema form
@@ -352,7 +401,7 @@ running
 - 不直接消费 `RuntimeInvocation`、`ToolCall`、`WorkflowRun`、`StepRun`。
 - 不根据业务领域硬编码专用组件作为主路径。
 - 不让模型驱动 UI。
-- 按 `kind / schema / actions` 渲染通用组件。
+- 按 `kind / fields / options / actions / riskLevel` 渲染通用组件，不直接解释 Runtime schema。
 - 所有用户动作通过 `InteractionResponse` 回写。
 
 ## 12. External Execution Adapter Fallback

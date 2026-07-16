@@ -43,7 +43,7 @@ ARCHITECTURE_BASELINE.md
 | 正式数据库模型 | `services/api/app/db/models.py` | `users`、`email_verification_codes`、`projects` |
 | 数据迁移 | `services/api/alembic/versions/20260714_0001_rebuild_auth_workspace_baseline.py` | 新基线首个 Alembic revision，无旧 Runtime schema 继承 |
 | Shared package | `packages/shared` | 保留为空的公开共享边界；不得存放 Phase 状态；Phase 2 才冻结正式共享契约 |
-| 本地启动 | `scripts/dev.sh` | 启动 Postgres、执行 Alembic、启动 FastAPI 与 Next.js；只公布真实存在的入口 |
+| 本地启动 | `scripts/dev.sh` | 启动 PostgreSQL 与 Qdrant、执行 Alembic、启动 FastAPI 与 Next.js；只公布真实存在的入口 |
 | Phase 状态 | `PHASED_ENGINEERING_DELIVERY_PLAN.md` 第 1 节 | 唯一阶段状态来源 |
 
 明确回答：当前真实入口是 Workspace 路由与 FastAPI Auth/Projects 路由；真实数据源是 PostgreSQL 中的新 `users`、`email_verification_codes`、`projects` 表；当前尚无正式 Task Presentation API 契约，Phase 1 只形成语义草案，Phase 2 验证后才冻结 OpenAPI/Pydantic/TypeScript 契约。
@@ -78,7 +78,7 @@ packages/shared
 - Frontend 不得消费 `TaskDecision`、`RuntimeInvocation`、`WorkflowRun`、`StepRun`、`ToolCall`、`ExecutorRun`、`ApprovalRequest` 等内部对象。
 - API route 只负责认证、请求校验和响应序列化；业务逻辑进入 module/application service。
 - Phase 3 的 Runtime 采用 API 内模块化单体，逻辑上分为 Control Plane 配置、Managed Runtime、Governance 和 Executor Adapter，不提前拆微服务。
-- `pnpm baseline:check` 对 phase code constant、production import mock、正式页面内本地任务 demo、Preview 默认关闭和启动入口进行回归检查。
+- `pnpm baseline:check` 对 phase code constant、production import mock、正式页面内本地任务 demo、Preview 默认关闭、启动入口和文档语义不变量进行回归检查；`pnpm docs:check` 可单独执行文档一致性检查。
 - Gate 记录统一放在 `docs/Chinese/mvp/phase-acceptance/`；每个 Gate 使用独立文件，记录日期、commit、逐项证据、测试、限制、迁移影响和唯一结论。未绑定 commit 的 checklist 不构成正式验收。
 
 ## 4. 旧资产处置清单
@@ -110,10 +110,11 @@ packages/shared
 | 资产 | 参考限制 |
 | --- | --- |
 | `/workspace/phase1-preview` 与 `apps/web/src/mock/preview` | 产品形态探索资产；默认关闭，不连接真实 Runtime，不构成 Gate 1 证据 |
-| `astraos_mvp_ui_preview.html` 与 `vendor/` 浏览器脚本 | 静态视觉参考，不进入 Next.js production import graph |
-| `WORKSPACE_MAIN_UI_COMPONENT_SPEC.md` | 组件拆分辅助规范，不覆盖 Presentation Contract 或阶段计划 |
-| `AI_EMPLOYEE_HARNESS_DESIGN.md` | Employee/Harness/Executor 辅助设计，不定义项目 Phase 状态 |
-| `TEMP_WORKSPACE_FIRST_REMEDIATION_PLAN.md` | 历史参考，不进入正式实现权威链 |
+| `astraos_mvp_ui_preview.html` | 已替换为醒目的 superseded notice，不再保留 Agent-first 可执行样片 |
+| `vendor/` 浏览器脚本 | 旧 HTML Preview 的未引用依赖，不进入 Next.js production import graph；后续可单独清理 |
+| `WORKSPACE_MAIN_UI_COMPONENT_SPEC.md` | 已重写为与 Presentation Contract 对齐的组件拆分辅助规范，不覆盖 Presentation Contract 或阶段计划 |
+| `AI_EMPLOYEE_HARNESS_DESIGN.md` | Employee/Harness/Executor 辅助设计，已与正式主权、契约和交付顺序对齐，不定义项目 Phase 状态 |
+| `TEMP_WORKSPACE_FIRST_REMEDIATION_PLAN.md` | 已替换为 `superseded` 历史占位，不再保留旧实现口径 |
 
 ### 4.4 delete
 
@@ -172,6 +173,6 @@ projects
 
 ## 8. Gate 0 当前状态
 
-Phase 0 已在实现 commit `d1c3e21f686c292a05988d2b48595bc81eb41504` 上完成验证并通过 Gate 0。正式验收记录位于 `phase-acceptance/GATE_0_ACCEPTANCE.md`。
+原 Gate 0 验收在实现 commit `d1c3e21f686c292a05988d2b48595bc81eb41504` 上完成，但后续完整文档审计确认产品定位、主权、RuntimeInvocation、Executor 分类和 Presentation 字段冲突在该 commit 中已经存在，因此原验收记录已标记为 `superseded`。
 
-Phase 0 状态为 `accepted`，Phase 1 已解除阻塞并回到 `not_started`。后续状态仍只能由 `PHASED_ENGINEERING_DELIVERY_PLAN.md` 和对应正式验收记录证明；本文档、Preview 或代码常量不能单独证明 Phase 状态。
+当前 Phase 0 状态为 `in_progress`，Phase 1 暂时恢复为 `blocked`，等待文档纠偏基线绑定新 commit 并完成重新验收。后续状态仍只能由 `PHASED_ENGINEERING_DELIVERY_PLAN.md` 和对应正式验收记录证明；本文档、Preview 或代码常量不能单独证明 Phase 状态。

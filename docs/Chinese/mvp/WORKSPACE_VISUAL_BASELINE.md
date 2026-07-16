@@ -9,11 +9,11 @@ Runtime 到 Workspace 的展示与交互契约以 `TASK_PRESENTATION_CONTRACT.md
 ## 1. 产品定位
 
 ```text
-AstraOS 是 Enterprise AI Runtime Control Plane。
+AstraOS 是 Enterprise AI Operating System。
 
-AI Employee 是运行在 AstraOS Runtime Control Plane 上的业务应用。
+AI Employee 是由 AstraOS Control Plane 定义、由 AstraOS Managed Runtime 托管运行的企业业务责任与治理对象。
 
-Agent / Hermes Executor 是执行侧能力的一部分，而不是整个系统。
+Runtime Control Plane 是 AstraOS 的系统层级之一。Agent / Hermes Executor 是执行侧能力的一部分，而不是整个系统。
 ```
 
 Hermes 自带 Agent Harness；Workspace 不展示 Harness、Agent loop、Skills、Subagents、模型上下文或工具调用循环。
@@ -46,16 +46,14 @@ Workspace 目前只连接：
 - 当前账号。
 - 工作区创建 / 列表 / 详情。
 
-Workspace 详情页保留未来 TaskRequest / Runtime Adapter API 位置：
+Workspace 详情页当前只展示明确的 Task capability unavailable 状态和禁用的 Task Composer，不模拟任务提交、审批、上下文请求或结果：
 
 ```text
-Delegate Task
-Approve Action
-Provide Context
-View Result
+Task experience is not connected yet
+Task submission will be enabled after the Workspace contract is implemented
 ```
 
-这些按钮只表达未来 Task-first Control Plane 的 API 位置，不连接旧硬编码 runtime。
+未来的 Delegate Task、Approve Action、Provide Context 和 View Result 必须在正式 Presentation View Model 与 Repository 契约建立后接入，不能以无后端语义的占位按钮表达已存在能力。
 
 正式接入后，Workspace 应从 `WorkspaceTaskView / InteractionView / ResultView` 渲染，不直接从后端内部对象生成页面。
 

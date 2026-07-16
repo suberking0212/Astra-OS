@@ -20,7 +20,7 @@ Task execution, Interaction Runtime, Presentation View Models, and Executors are
 
 - Docker Desktop with the Docker daemon running
 - Node.js with `pnpm` available, or Corepack enabled
-- Python 3.11 or newer
+- Python 3.11 or 3.12（Python 3.13 暂不在支持范围内）
 - `curl` and `lsof`
 
 ### Start everything with the shell script
@@ -135,4 +135,4 @@ Historical reference only:
 
 - `docs/Chinese/mvp/TEMP_WORKSPACE_FIRST_REMEDIATION_PLAN.md`
 
-Run `pnpm baseline:check` to verify that production code is not driven by phase markers, local task demos, or mock imports.
+Run `pnpm baseline:check` to verify both engineering boundaries and document consistency. Use `pnpm docs:check` when only the architecture, contract, phase, or reference-document invariants need to be checked.

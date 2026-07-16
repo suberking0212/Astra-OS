@@ -121,8 +121,10 @@ flowchart TB
   WF --> FD
   HERMES --> FD
 
-  MR <--> IR[Interaction Runtime]
-  MR --> AUDIT[Audit / Idempotency / Outcome Validation]
+  MR --> IR[Interaction Runtime<br/>Managed Runtime internal module]
+  MR --> AUDIT[Audit / Observability / Evaluation<br/>independent cross-cutting capabilities]
+  GH --> AUDIT
+  RA --> AUDIT
 ```
 
 系统分工：
@@ -719,19 +721,17 @@ Hermes
 
 ### 11.1 安全对象
 
-AstraOS Managed Runtime 默认维护：
+AstraOS runtime 体系必须维护下列对象，但它们的主权归属不同：
 
-- PermissionGrant。
-- ApprovalRequest。
-- IdempotencyRecord。
-- RuntimeAuditEvent。
-- InteractionRequest。
-- InteractionResponse。
-- ToolDefinition。
-- OutcomeSpec。
-- Visibility classification。
+| 对象 | 主权归属 |
+| --- | --- |
+| PermissionGrant / ApprovalRequest / IdempotencyRecord | Governance Harness Services；Managed Runtime 只协调等待、恢复和失败语义 |
+| InteractionRequest / InteractionResponse / Task 状态 | Managed Runtime |
+| ToolDefinition registry / Outcome Contract | Control Plane；Governance Harness Services 负责执行时校验 |
+| RuntimeAuditEvent | 独立 Audit 横切能力 |
+| Visibility classification | Presentation Contract 与 Managed Runtime 的共同执行约束 |
 
-这些对象不属于 Hermes 私有能力。
+这些对象都不属于 Hermes 私有能力，也不能因为 MVP 采用模块化单体而改变逻辑主权。
 
 ### 11.2 PermissionGrant
 
@@ -928,6 +928,7 @@ type WorkspaceTaskView = {
     | "failed"
     | "cancelled";
   progressSummary: string;
+  progress: TaskProgressView | null;
   interactions: InteractionView[];
   result: ResultView | null;
 };
@@ -990,6 +991,9 @@ type ExecutorCapability = {
   supports_sandbox: boolean;
   supports_interaction_intent: boolean;
   supports_redacted_trace: boolean;
+  supports_supervised_browser: boolean;
+  supports_auth_handoff: boolean;
+  supports_structured_result: boolean;
 };
 ```
 
@@ -1019,6 +1023,7 @@ type ModelCapability = {
   supports_tools: boolean;
   supports_streaming: boolean;
   supports_vision: boolean;
+  supports_parallel_tool_calls: boolean;
   supports_json_schema: boolean;
   supports_system_prompt: boolean;
   max_input_tokens: number;
@@ -1124,7 +1129,9 @@ type OutcomeSpec = {
 type TaskResult = {
   id: string;
   task_id: string;
-  status: "succeeded" | "failed" | "cancelled";
+  decision_id: string;
+  status: "succeeded" | "partially_succeeded" | "failed" | "cancelled";
+  result_type: string;
   summary: string;
   business_objects: BusinessObjectRef[];
   failure_reason: string | null;
@@ -1470,7 +1477,15 @@ ToolDefinition 示例：
 
 ## 21. 分阶段落地
 
-### Sequence A：Task-first Runtime Core
+### Sequence A：Presentation 与 Interaction Contract
+
+- InteractionRequest。
+- InteractionResponse。
+- Presentation Contract。
+- WorkspaceTaskView。
+- waiting_for_user / waiting_for_approval 的用户语义。
+
+### Sequence B：Task-first Runtime Core
 
 - TaskRequest。
 - TaskDecision。
@@ -1480,22 +1495,13 @@ ToolDefinition 示例：
 - DirectAnswerExecutor。
 - ClarificationExecutor。
 
-### Sequence B：ToolActionExecutor
+### Sequence C：ToolActionExecutor
 
 - ToolDefinition。
 - input_schema / output_schema。
 - read / draft / write 工具。
 - ToolCall Audit。
 - ToolResult 验证。
-
-### Sequence C：Interaction Runtime
-
-- InteractionRequest。
-- InteractionResponse。
-- waiting_for_user。
-- waiting_for_approval。
-- Presentation Contract。
-- WorkspaceTaskView。
 
 ### Sequence D：Permission / Approval / Idempotency / Audit
 
@@ -1506,18 +1512,7 @@ ToolDefinition 示例：
 - approve / reject / expired。
 - Runtime resume 幂等。
 
-### Sequence E：ExternalAgentExecutor / Hermes POC
-
-- ExecutorRequest。
-- ExecutorEvent。
-- ExecutorResult。
-- ExecutorCapability。
-- ExecutorControl。
-- Hermes Adapter。
-- ToolRequest 回到 AstraOS ToolAction。
-- CandidateResult 经过 OutcomeSpec 验收。
-
-### Sequence F：Customer Support Employee
+### Sequence E：Customer Support Employee
 
 - EmployeePackage。
 - Employee Execution Profile / Task Routing Configuration。
@@ -1529,6 +1524,17 @@ ToolDefinition 示例：
 - TaskResult。
 - Employee vs Direct Agent Test。
 - Executor Selection Accuracy。
+
+### Sequence F：ExternalAgentExecutor / Hermes POC
+
+- ExecutorRequest。
+- ExecutorEvent。
+- ExecutorResult。
+- ExecutorCapability。
+- ExecutorControl。
+- Hermes Adapter。
+- ToolRequest 回到 AstraOS ToolAction。
+- CandidateResult 经过 OutcomeSpec 验收。
 
 ## 22. 关键禁止事项
 
@@ -1558,7 +1564,7 @@ AI Employee Harness 支持方案必须遵守：
 - `PHASED_ENGINEERING_DELIVERY_PLAN.md`：分阶段交付顺序、Phase 4 First Governed Employee、Phase 5 External Agent Runtime POC 与生产加固。
 - `WORKSPACE_VISUAL_BASELINE.md`：Workspace 的 Task-first 体验边界。
 
-如果本文档与上述文档冲突，以 `ARCHITECTURE_BASELINE.md` 和 `RUNTIME_REMEDIATION_SPEC.md` 为准。
+如果本文档与上述文档冲突，按领域分别处理：系统主权以 `ARCHITECTURE_BASELINE.md` 为准，用户展示语义以 `TASK_PRESENTATION_CONTRACT.md` 为准，Runtime 对象与治理工程契约以 `RUNTIME_REMEDIATION_SPEC.md` 为准，阶段与 Gate 以 `PHASED_ENGINEERING_DELIVERY_PLAN.md` 为准，Workspace 视觉边界以 `WORKSPACE_VISUAL_BASELINE.md` 为准。
 
 ## 24. 总结
 
