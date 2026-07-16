@@ -15,6 +15,8 @@ WEB_PID_FILE="${PID_DIR}/web.pid"
 API_LOG_TAIL_PID_FILE="${PID_DIR}/api-log-tail.pid"
 API_LOG_LEVEL="${API_LOG_LEVEL:-debug}"
 PYTHON_BIN="${PYTHON_BIN:-}"
+LOCKED_CONDA_ENV_NAME="${LOCKED_CONDA_ENV_NAME:-agent-core}"
+LOCKED_PYTHON_BIN="${LOCKED_PYTHON_BIN:-${HOME}/miniconda3/envs/${LOCKED_CONDA_ENV_NAME}/bin/python}"
 
 cd "$ROOT_DIR"
 mkdir -p "$LOG_DIR" "$PID_DIR"
@@ -35,57 +37,25 @@ select_python() {
     "$python_bin" -c 'import sys; raise SystemExit(0 if (3, 11) <= sys.version_info < (3, 13) else 1)' >/dev/null 2>&1
   }
 
-  resolve_python_candidate() {
-    local candidate="$1"
-
-    if [ -x "$candidate" ]; then
-      printf '%s\n' "$candidate"
-      return 0
-    fi
-
-    if command -v "$candidate" >/dev/null 2>&1; then
-      command -v "$candidate"
-      return 0
-    fi
-
-    return 1
-  }
-
   if [ -n "$PYTHON_BIN" ]; then
     require_command "$PYTHON_BIN" "Set PYTHON_BIN to a Python 3.11 or 3.12 executable."
   else
-    local candidate=""
-    local resolved_candidate=""
-    local candidates=(
-      python3
-      python
-      /opt/homebrew/bin/python3
-      /usr/local/bin/python3
-      /opt/homebrew/bin/python3.14
-      /opt/homebrew/bin/python3.13
-      /opt/homebrew/bin/python3.12
-      /opt/homebrew/bin/python3.11
-      /usr/local/bin/python3.14
-      /usr/local/bin/python3.13
-      /usr/local/bin/python3.12
-      /usr/local/bin/python3.11
-    )
+    local conda_base=""
 
-    for candidate in "${candidates[@]}"; do
-      resolved_candidate="$(resolve_python_candidate "$candidate" || true)"
-      if [ -z "$resolved_candidate" ]; then
-        continue
-      fi
+    if command -v conda >/dev/null 2>&1; then
+      conda_base="$(conda info --base 2>/dev/null || true)"
+    fi
 
-      if supports_python_version "$resolved_candidate"; then
-        PYTHON_BIN="$resolved_candidate"
-        break
-      fi
-    done
+    if [ -n "$conda_base" ] && [ -x "${conda_base}/envs/${LOCKED_CONDA_ENV_NAME}/bin/python" ]; then
+      PYTHON_BIN="${conda_base}/envs/${LOCKED_CONDA_ENV_NAME}/bin/python"
+    else
+      PYTHON_BIN="$LOCKED_PYTHON_BIN"
+    fi
   fi
 
-  if [ -z "$PYTHON_BIN" ]; then
-    echo "Python 3.11 or 3.12 is required. Set PYTHON_BIN to a compatible executable." >&2
+  if [ ! -x "$PYTHON_BIN" ]; then
+    echo "Locked Python not found: ${PYTHON_BIN}" >&2
+    echo "Expected conda env: ${LOCKED_CONDA_ENV_NAME}. Override with PYTHON_BIN or LOCKED_PYTHON_BIN if needed." >&2
     return 1
   fi
 
@@ -93,6 +63,8 @@ select_python() {
     echo "${PYTHON_BIN} must be Python 3.11 or 3.12." >&2
     return 1
   }
+
+  echo "Using Python: ${PYTHON_BIN}"
 }
 
 ensure_pnpm() {

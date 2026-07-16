@@ -31,6 +31,8 @@ From the repository root:
 ./scripts/dev.sh
 ```
 
+`scripts/dev.sh` 默认锁定 `conda` 的 `agent-core` 环境，并使用其中的 Python 解释器启动后端；只有在你显式传入 `PYTHON_BIN` 或 `LOCKED_PYTHON_BIN` 时才会改用其他解释器。
+
 The root package script calls the same shell script, so this is equivalent when `pnpm` is already available:
 
 ```bash
@@ -79,7 +81,8 @@ Optional overrides:
 
 ```bash
 API_PORT=8100 WEB_PORT=3100 ./scripts/dev.sh
-PYTHON_BIN=python3.12 ./scripts/dev.sh
+PYTHON_BIN=/Users/laosun/miniconda3/envs/agent-core/bin/python ./scripts/dev.sh
+LOCKED_CONDA_ENV_NAME=agent-core ./scripts/dev.sh
 API_LOG_LEVEL=info ./scripts/dev.sh
 ```
 
