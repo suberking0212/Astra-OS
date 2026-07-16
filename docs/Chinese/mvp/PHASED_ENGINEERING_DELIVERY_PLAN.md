@@ -13,8 +13,8 @@
 | Phase | 状态 | 说明 |
 | --- | --- | --- |
 | Phase 0 | `accepted` | Gate 0 纠偏后重新验收通过；正式记录见 `phase-acceptance/GATE_0_REACCEPTANCE.md`，后续补充一致性审计见 `phase-acceptance/GATE_0_SUPPLEMENTAL_CONSISTENCY_AUDIT.md` |
-| Phase 1 | `in_progress` | Phase 1 实现已进入验收整改；Gate 1 首次验收未通过，正式记录见 `phase-acceptance/GATE_1_ACCEPTANCE.md` |
-| Phase 2 | `blocked` | 等待 Gate 1 整改后重新验收通过 |
+| Phase 1 | `accepted` | Gate 1 整改后重新验收通过；正式记录见 `phase-acceptance/GATE_1_REACCEPTANCE.md` |
+| Phase 2 | `not_started` | Gate 1 已通过，等待正式启动 Mock 产品闭环与契约冻结 |
 | Phase 3 | `blocked` | 等待 Phase 2 验收 |
 | Phase 4 | `blocked` | 等待 Phase 3 验收 |
 | Phase 5 | `blocked` | Post-MVP；等待 Gate 4 accepted 后再决定是否启动 External Agent POC |
