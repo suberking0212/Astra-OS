@@ -66,6 +66,12 @@ assertContains("WORKSPACE_MAIN_UI_COMPONENT_SPEC.md", "当前正式 Workspace �
 assertContains("README.md", "Python 3.11 or 3.12");
 assertContains("services/api/pyproject.toml", 'requires-python = ">=3.11,<3.13"');
 assertContains("services/api/uv.lock", 'requires-python = ">=3.11, <3.13"');
+assertContains(phased, "| Phase 0 | `accepted` | Gate 0 纠偏后重新验收通过");
+assertContains(phased, "| Phase 1 | `not_started` | Gate 0 已重新通过");
+assertContains(
+  "docs/Chinese/mvp/phase-acceptance/GATE_0_REACCEPTANCE.md",
+  "对应纠偏基线 commit：`0953b8c62b03922e581d9374d6f51ebf0f37798b`",
+);
 
 if (failures.length > 0) {
   console.error("Document consistency check failed:");

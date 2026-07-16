@@ -12,8 +12,8 @@
 
 | Phase | 状态 | 说明 |
 | --- | --- | --- |
-| Phase 0 | `in_progress` | 原 Gate 0 验收因文档语义冲突被撤销，正在完成纠偏与重新验收 |
-| Phase 1 | `blocked` | 等待 Gate 0 重新验收通过 |
+| Phase 0 | `accepted` | Gate 0 纠偏后重新验收通过；记录见 `phase-acceptance/GATE_0_REACCEPTANCE.md` |
+| Phase 1 | `not_started` | Gate 0 已重新通过，等待正式启动 Workspace 产品形态与语义契约草案 |
 | Phase 2 | `blocked` | 等待 Phase 1 验收 |
 | Phase 3 | `blocked` | 等待 Phase 2 验收 |
 | Phase 4 | `blocked` | 等待 Phase 3 验收 |

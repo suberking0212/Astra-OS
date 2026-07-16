@@ -173,6 +173,6 @@ projects
 
 ## 8. Gate 0 当前状态
 
-原 Gate 0 验收在实现 commit `d1c3e21f686c292a05988d2b48595bc81eb41504` 上完成，但后续完整文档审计确认产品定位、主权、RuntimeInvocation、Executor 分类和 Presentation 字段冲突在该 commit 中已经存在，因此原验收记录已标记为 `superseded`。
+原 Gate 0 验收在实现 commit `d1c3e21f686c292a05988d2b48595bc81eb41504` 上完成，但后续完整文档审计确认产品定位、主权、RuntimeInvocation、Executor 分类和 Presentation 字段冲突在该 commit 中已经存在，因此原验收记录 `phase-acceptance/GATE_0_ACCEPTANCE.md` 已标记为 `superseded`。
 
-当前 Phase 0 状态为 `in_progress`，Phase 1 暂时恢复为 `blocked`，等待文档纠偏基线绑定新 commit 并完成重新验收。后续状态仍只能由 `PHASED_ENGINEERING_DELIVERY_PLAN.md` 和对应正式验收记录证明；本文档、Preview 或代码常量不能单独证明 Phase 状态。
+文档纠偏基线 commit `0953b8c62b03922e581d9374d6f51ebf0f37798b` 已完成重新验证，正式重新验收记录位于 `phase-acceptance/GATE_0_REACCEPTANCE.md`。当前 Phase 0 状态为 `accepted`，Phase 1 已解除阻塞并回到 `not_started`。后续状态仍只能由 `PHASED_ENGINEERING_DELIVERY_PLAN.md` 和对应正式验收记录证明；本文档、Preview 或代码常量不能单独证明 Phase 状态。
