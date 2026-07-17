@@ -6,7 +6,6 @@ on:
   push:
     branches:
       - workspace-main
-      - "codex/**"
 
 permissions:
   contents: read
