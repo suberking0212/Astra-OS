@@ -14,8 +14,8 @@
 | --- | --- | --- |
 | Phase 0 | `accepted` | Gate 0 纠偏后重新验收通过；正式记录见 `phase-acceptance/GATE_0_REACCEPTANCE.md`，后续补充一致性审计见 `phase-acceptance/GATE_0_SUPPLEMENTAL_CONSISTENCY_AUDIT.md` |
 | Phase 1 | `accepted` | Gate 1 整改后重新验收通过；正式记录见 `phase-acceptance/GATE_1_REACCEPTANCE.md` |
-| Phase 2 | `in_progress` | 已正式启动 Mock 产品闭环、Presentation Projector 与工程契约冻结；Gate 2 尚未验收 |
-| Phase 3 | `blocked` | 等待 Phase 2 验收 |
+| Phase 2 | `accepted` | Gate 2 验收通过；正式记录见 `phase-acceptance/GATE_2_ACCEPTANCE.md` |
+| Phase 3 | `not_started` | Gate 2 已通过，等待正式启动真实 Runtime 最小纵向切片 |
 | Phase 4 | `blocked` | 等待 Phase 3 验收 |
 | Phase 5 | `blocked` | Post-MVP；等待 Gate 4 accepted 后再决定是否启动 External Agent POC |
 

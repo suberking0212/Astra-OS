@@ -158,7 +158,7 @@ GET  /api/tasks/{task_id}/result
 - [x] 审计 production/mock import 和 `isMock` 等价分支。
 - [x] 验证关闭开关后 Mock API 不存在。
 - [x] 验证删除 Mock 实现不会要求修改 production component/API repository/contract。
-- [ ] 新增 commit-bound `GATE_2_ACCEPTANCE.md`；只有全部通过后才把 Phase 2 改为 `accepted`。
+- [x] 新增 commit-bound `GATE_2_ACCEPTANCE.md`；全部通过后已把 Phase 2 改为 `accepted`。
 
 ## 8. Gate 2 证据要求
 

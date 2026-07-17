@@ -47,6 +47,7 @@ const historical = "docs/Chinese/mvp/TEMP_WORKSPACE_FIRST_REMEDIATION_PLAN.md";
 const supplementalAudit = "docs/Chinese/mvp/phase-acceptance/GATE_0_SUPPLEMENTAL_CONSISTENCY_AUDIT.md";
 const gate1Acceptance = "docs/Chinese/mvp/phase-acceptance/GATE_1_ACCEPTANCE.md";
 const gate1Reacceptance = "docs/Chinese/mvp/phase-acceptance/GATE_1_REACCEPTANCE.md";
+const gate2Acceptance = "docs/Chinese/mvp/phase-acceptance/GATE_2_ACCEPTANCE.md";
 
 assertContains(architecture, "AstraOS 是 Enterprise AI Operating System。");
 assertContains(visual, "AstraOS 是 Enterprise AI Operating System。");
@@ -201,7 +202,8 @@ assertContains("services/api/pyproject.toml", 'requires-python = ">=3.11,<3.13"'
 assertContains("services/api/uv.lock", 'requires-python = ">=3.11, <3.13"');
 assertContains(phased, "| Phase 0 | `accepted` | Gate 0 纠偏后重新验收通过");
 assertContains(phased, "| Phase 1 | `accepted` | Gate 1 整改后重新验收通过");
-assertContains(phased, "| Phase 2 | `in_progress` | 已正式启动 Mock 产品闭环");
+assertContains(phased, "| Phase 2 | `accepted` | Gate 2 验收通过");
+assertContains(phased, "| Phase 3 | `not_started` | Gate 2 已通过");
 assertContains(phased, "GATE_1_REACCEPTANCE.md");
 assertContains(gate1Acceptance, "验收结论：`not_accepted`");
 assertContains(gate1Acceptance, "Phase 1 状态：`in_progress`");
@@ -209,6 +211,12 @@ assertContains(gate1Acceptance, "Phase 2 状态：`blocked`");
 assertContains(gate1Reacceptance, "验收结论：`accepted`");
 assertContains(gate1Reacceptance, "Phase 1 状态：`accepted`");
 assertContains(gate1Reacceptance, "Phase 2 状态：`not_started`");
+assertContains(gate2Acceptance, "验收结论：`accepted`");
+assertContains(gate2Acceptance, "Phase 2 状态：`accepted`");
+assertContains(gate2Acceptance, "Phase 3 状态：`not_started`");
+assertContains(gate2Acceptance, "对应实现 commit：`77f617e5c21d25afb70d54bd5b0d2ea35747330a`");
+assertContains(gate2Acceptance, "TD-04：project / workspace 命名");
+assertContains(gate2Acceptance, "TD-06：dev.sh 端口清理");
 assertContains(
   gate1Reacceptance,
   "对应整改实现 commit：`8b07f5ccb862989ebe402dac8323b65c136d9548`",
