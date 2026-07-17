@@ -61,6 +61,7 @@ class Settings(BaseSettings):
     api_port: int = 8000
     frontend_origin: str = "http://localhost:3000"
     frontend_dev_origins: str = "http://localhost:3000,http://localhost:3001"
+    enable_mock_workspace_api: bool = False
 
     jwt_secret_key: str = "change-me-in-local-env-32-bytes-minimum"
     jwt_algorithm: str = "HS256"

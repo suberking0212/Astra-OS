@@ -318,7 +318,7 @@ type BusinessObjectView = {
 };
 ```
 
-以上字段是 Phase 1 语义草案；在 Phase 2 的 Mock 闭环、OpenAPI、Pydantic、TypeScript 和 contract tests 验证完成前不构成冻结契约。
+以上字段已在 Phase 2 通过隔离 Mock 闭环、OpenAPI artifact、Pydantic schema、TypeScript shared types、Projector tests 和 Mock/API Repository 共同 contract tests 冻结为 `workspace-presentation-v1`。新增可选字段可以保持 v1；删除、重命名、改变语义、改变可空性或收窄枚举必须显式版本化或提供迁移方案。
 
 Presentation Projector 先把 Runtime `InteractionRequest.schema / payload` 转换为
 `InteractionView.fields / options / actions`。前端只按

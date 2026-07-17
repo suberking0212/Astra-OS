@@ -50,6 +50,12 @@ jobs:
       - name: Type-check web application
         run: pnpm typecheck
 
+      - name: Run Workspace Repository contract tests
+        run: pnpm --filter @astraos/web test:contract
+
+      - name: Verify development process cleanup contract
+        run: ./scripts/tests/test-dev-process-cleanup.sh
+
       - name: Verify cold build directory
         run: test ! -d apps/web/.next
 

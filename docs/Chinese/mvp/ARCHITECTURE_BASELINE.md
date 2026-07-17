@@ -108,6 +108,12 @@ Foundation Layer
 
 Account Service 是 API Layer 下的业务服务，负责账号、身份、邮箱验证和邮件发送。
 
+### 2.1 Workspace 命名规则
+
+`Workspace` 是用户产品、公开 API、Presentation Contract 和未来 Runtime scope 的唯一正式术语。`Project` 不作为 `Workspace` 的公开别名，也不得进入 `workspace-presentation-v1` endpoint、schema 或 View Model。
+
+历史 `projects` 容器表已经从重建数据基线移除，Phase 2 不恢复该表；当前 `workspace_id` 只表达逻辑产品 scope。Phase 3 若需要持久化 Workspace，必须新增 `workspaces` 模型和前置 Alembic revision，不得直接修改既有基线 revision。内部业务未来若引入真正的 Project 对象，必须具有独立业务含义和独立标识，不能与 Workspace 一对一静默互换。
+
 ## 3. 长期边界与 MVP 工程形态
 
 本文档定义的是长期架构边界，不要求 MVP 第一版把所有边界实体化为独立服务、独立数据库对象、独立事件总线或完整企业级状态机。

@@ -1,0 +1,1882 @@
+{
+  "components": {
+    "schemas": {
+      "AuthResponse": {
+        "properties": {
+          "access_token": {
+            "title": "Access Token",
+            "type": "string"
+          },
+          "token_type": {
+            "default": "bearer",
+            "title": "Token Type",
+            "type": "string"
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserRead"
+          }
+        },
+        "required": [
+          "access_token",
+          "user"
+        ],
+        "title": "AuthResponse",
+        "type": "object"
+      },
+      "BusinessObjectView": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "type",
+          "id",
+          "label",
+          "url"
+        ],
+        "title": "BusinessObjectView",
+        "type": "object"
+      },
+      "EmailVerificationResponse": {
+        "properties": {
+          "debug_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Debug Code"
+          },
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "email": {
+            "format": "email",
+            "title": "Email",
+            "type": "string"
+          },
+          "email_verified": {
+            "title": "Email Verified",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "email",
+          "email_verified",
+          "detail"
+        ],
+        "title": "EmailVerificationResponse",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "HistoryTaskView": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "resultStatus": {
+            "anyOf": [
+              {
+                "enum": [
+                  "succeeded",
+                  "partially_succeeded",
+                  "failed",
+                  "cancelled"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resultstatus"
+          },
+          "status": {
+            "enum": [
+              "thinking",
+              "running",
+              "needs_context",
+              "needs_approval",
+              "needs_attention",
+              "completed",
+              "failed",
+              "cancelled"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "summary": {
+            "title": "Summary",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "updatedAt": {
+            "title": "Updatedat",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "status",
+          "summary",
+          "updatedAt",
+          "resultStatus"
+        ],
+        "title": "HistoryTaskView",
+        "type": "object"
+      },
+      "InteractionActionView": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "enum": [
+              "submit",
+              "select",
+              "approve",
+              "reject",
+              "edit",
+              "takeover",
+              "cancel"
+            ],
+            "title": "Action",
+            "type": "string"
+          },
+          "emphasis": {
+            "enum": [
+              "primary",
+              "secondary",
+              "danger"
+            ],
+            "title": "Emphasis",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "action",
+          "label",
+          "emphasis"
+        ],
+        "title": "InteractionActionView",
+        "type": "object"
+      },
+      "InteractionFieldView": {
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "placeholder": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Placeholder"
+          },
+          "required": {
+            "title": "Required",
+            "type": "boolean"
+          },
+          "type": {
+            "enum": [
+              "text",
+              "textarea",
+              "number",
+              "date",
+              "file"
+            ],
+            "title": "Type",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "type",
+          "required",
+          "placeholder"
+        ],
+        "title": "InteractionFieldView",
+        "type": "object"
+      },
+      "InteractionOptionView": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "value",
+          "label",
+          "description"
+        ],
+        "title": "InteractionOptionView",
+        "type": "object"
+      },
+      "InteractionResponseRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "enum": [
+              "submit",
+              "select",
+              "approve",
+              "reject",
+              "edit",
+              "takeover",
+              "cancel"
+            ],
+            "title": "Action",
+            "type": "string"
+          },
+          "data": {
+            "additionalProperties": true,
+            "title": "Data",
+            "type": "object"
+          }
+        },
+        "required": [
+          "action"
+        ],
+        "title": "InteractionResponseRequest",
+        "type": "object"
+      },
+      "InteractionView": {
+        "additionalProperties": false,
+        "properties": {
+          "actions": {
+            "items": {
+              "$ref": "#/components/schemas/InteractionActionView"
+            },
+            "title": "Actions",
+            "type": "array"
+          },
+          "body": {
+            "title": "Body",
+            "type": "string"
+          },
+          "emphasisNote": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Emphasisnote"
+          },
+          "expiresAt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expiresat"
+          },
+          "fields": {
+            "items": {
+              "$ref": "#/components/schemas/InteractionFieldView"
+            },
+            "title": "Fields",
+            "type": "array"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "input",
+              "selection",
+              "confirmation",
+              "approval",
+              "result",
+              "takeover",
+              "progress",
+              "error_recovery",
+              "file_request",
+              "authentication"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "options": {
+            "items": {
+              "$ref": "#/components/schemas/InteractionOptionView"
+            },
+            "title": "Options",
+            "type": "array"
+          },
+          "responseSummary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Responsesummary"
+          },
+          "riskLevel": {
+            "enum": [
+              "none",
+              "low",
+              "medium",
+              "high"
+            ],
+            "title": "Risklevel",
+            "type": "string"
+          },
+          "statusLabel": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Statuslabel"
+          },
+          "taskId": {
+            "title": "Taskid",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "taskId",
+          "kind",
+          "title",
+          "body",
+          "fields",
+          "options",
+          "actions",
+          "riskLevel",
+          "expiresAt"
+        ],
+        "title": "InteractionView",
+        "type": "object"
+      },
+      "LoginRequest": {
+        "properties": {
+          "email": {
+            "format": "email",
+            "title": "Email",
+            "type": "string"
+          },
+          "password": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Password",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "LoginRequest",
+        "type": "object"
+      },
+      "ReferenceInput": {
+        "additionalProperties": false,
+        "properties": {
+          "mediaType": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mediatype"
+          },
+          "name": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "ReferenceInput",
+        "type": "object"
+      },
+      "RegisterRequest": {
+        "properties": {
+          "email": {
+            "format": "email",
+            "title": "Email",
+            "type": "string"
+          },
+          "password": {
+            "maxLength": 128,
+            "minLength": 8,
+            "title": "Password",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "RegisterRequest",
+        "type": "object"
+      },
+      "ResendEmailVerificationRequest": {
+        "properties": {
+          "email": {
+            "format": "email",
+            "title": "Email",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email"
+        ],
+        "title": "ResendEmailVerificationRequest",
+        "type": "object"
+      },
+      "ResultView": {
+        "additionalProperties": false,
+        "properties": {
+          "businessObjects": {
+            "items": {
+              "$ref": "#/components/schemas/BusinessObjectView"
+            },
+            "title": "Businessobjects",
+            "type": "array"
+          },
+          "failureReason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Failurereason"
+          },
+          "nextActions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Nextactions",
+            "type": "array"
+          },
+          "resultType": {
+            "title": "Resulttype",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "succeeded",
+              "partially_succeeded",
+              "failed",
+              "cancelled"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "summary": {
+            "title": "Summary",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "resultType",
+          "title",
+          "summary",
+          "businessObjects",
+          "nextActions",
+          "failureReason"
+        ],
+        "title": "ResultView",
+        "type": "object"
+      },
+      "SubmitTaskRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "intent": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Intent",
+            "type": "string"
+          },
+          "references": {
+            "items": {
+              "$ref": "#/components/schemas/ReferenceInput"
+            },
+            "maxItems": 10,
+            "title": "References",
+            "type": "array"
+          }
+        },
+        "required": [
+          "intent"
+        ],
+        "title": "SubmitTaskRequest",
+        "type": "object"
+      },
+      "TaskComposerView": {
+        "additionalProperties": false,
+        "properties": {
+          "addContextLabel": {
+            "title": "Addcontextlabel",
+            "type": "string"
+          },
+          "currentRequirement": {
+            "title": "Currentrequirement",
+            "type": "string"
+          },
+          "disabled": {
+            "title": "Disabled",
+            "type": "boolean"
+          },
+          "disabledReason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Disabledreason"
+          },
+          "placeholder": {
+            "title": "Placeholder",
+            "type": "string"
+          },
+          "prefill": {
+            "title": "Prefill",
+            "type": "string"
+          },
+          "submitLabel": {
+            "title": "Submitlabel",
+            "type": "string"
+          },
+          "suggestedPrompts": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Suggestedprompts",
+            "type": "array"
+          },
+          "supportsAttachments": {
+            "title": "Supportsattachments",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "currentRequirement",
+          "placeholder",
+          "prefill",
+          "suggestedPrompts",
+          "supportsAttachments",
+          "disabled",
+          "disabledReason",
+          "submitLabel",
+          "addContextLabel"
+        ],
+        "title": "TaskComposerView",
+        "type": "object"
+      },
+      "TaskFactView": {
+        "additionalProperties": false,
+        "properties": {
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "value"
+        ],
+        "title": "TaskFactView",
+        "type": "object"
+      },
+      "TaskProgressItemView": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "running",
+              "completed",
+              "failed",
+              "cancelled"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "timestamp": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timestamp"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "description",
+          "status",
+          "timestamp"
+        ],
+        "title": "TaskProgressItemView",
+        "type": "object"
+      },
+      "TaskProgressView": {
+        "additionalProperties": false,
+        "properties": {
+          "completedSteps": {
+            "title": "Completedsteps",
+            "type": "integer"
+          },
+          "currentStep": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Currentstep"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/TaskProgressItemView"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "summary": {
+            "title": "Summary",
+            "type": "string"
+          },
+          "totalSteps": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Totalsteps"
+          },
+          "updatedAt": {
+            "title": "Updatedat",
+            "type": "string"
+          }
+        },
+        "required": [
+          "summary",
+          "currentStep",
+          "completedSteps",
+          "totalSteps",
+          "updatedAt",
+          "items"
+        ],
+        "title": "TaskProgressView",
+        "type": "object"
+      },
+      "UserRead": {
+        "properties": {
+          "created_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "email": {
+            "format": "email",
+            "title": "Email",
+            "type": "string"
+          },
+          "email_verified": {
+            "default": false,
+            "title": "Email Verified",
+            "type": "boolean"
+          },
+          "email_verified_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email Verified At"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "required": [
+          "id",
+          "email"
+        ],
+        "title": "UserRead",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      },
+      "VerifyEmailRequest": {
+        "properties": {
+          "code": {
+            "maxLength": 12,
+            "minLength": 4,
+            "title": "Code",
+            "type": "string"
+          },
+          "email": {
+            "format": "email",
+            "title": "Email",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "code"
+        ],
+        "title": "VerifyEmailRequest",
+        "type": "object"
+      },
+      "WorkspaceApiErrorEnvelope": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "details": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Details"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "retryable": {
+            "title": "Retryable",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "retryable",
+          "details"
+        ],
+        "title": "WorkspaceApiErrorEnvelope",
+        "type": "object"
+      },
+      "WorkspaceIdentityView": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "WorkspaceIdentityView",
+        "type": "object"
+      },
+      "WorkspaceTaskSurfaceView": {
+        "additionalProperties": false,
+        "properties": {
+          "composer": {
+            "$ref": "#/components/schemas/TaskComposerView"
+          },
+          "contractVersion": {
+            "const": "workspace-presentation-v1",
+            "title": "Contractversion",
+            "type": "string"
+          },
+          "history": {
+            "items": {
+              "$ref": "#/components/schemas/HistoryTaskView"
+            },
+            "title": "History",
+            "type": "array"
+          },
+          "statusLabel": {
+            "title": "Statuslabel",
+            "type": "string"
+          },
+          "task": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WorkspaceTaskView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "workspace": {
+            "$ref": "#/components/schemas/WorkspaceIdentityView"
+          }
+        },
+        "required": [
+          "contractVersion",
+          "workspace",
+          "statusLabel",
+          "task",
+          "history",
+          "composer"
+        ],
+        "title": "WorkspaceTaskSurfaceView",
+        "type": "object"
+      },
+      "WorkspaceTaskView": {
+        "additionalProperties": false,
+        "properties": {
+          "facts": {
+            "items": {
+              "$ref": "#/components/schemas/TaskFactView"
+            },
+            "title": "Facts",
+            "type": "array"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "interactions": {
+            "items": {
+              "$ref": "#/components/schemas/InteractionView"
+            },
+            "title": "Interactions",
+            "type": "array"
+          },
+          "progress": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TaskProgressView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "progressSummary": {
+            "title": "Progresssummary",
+            "type": "string"
+          },
+          "result": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ResultView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status": {
+            "enum": [
+              "thinking",
+              "running",
+              "needs_context",
+              "needs_approval",
+              "needs_attention",
+              "completed",
+              "failed",
+              "cancelled"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "statusLabel": {
+            "title": "Statuslabel",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "understanding": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Understanding",
+            "type": "array"
+          },
+          "updatedAt": {
+            "title": "Updatedat",
+            "type": "string"
+          },
+          "userIntent": {
+            "title": "Userintent",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "userIntent",
+          "status",
+          "statusLabel",
+          "progressSummary",
+          "progress",
+          "interactions",
+          "result",
+          "understanding",
+          "facts",
+          "updatedAt"
+        ],
+        "title": "WorkspaceTaskView",
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "scheme": "bearer",
+        "type": "http"
+      }
+    }
+  },
+  "info": {
+    "description": "AstraOS rebuild baseline API with Auth, Email Verification, and a single Workspace shell.",
+    "title": "AstraOS API",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/tasks/{task_id}": {
+      "get": {
+        "operationId": "get_task_api_tasks__task_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "task_id",
+            "required": true,
+            "schema": {
+              "title": "Task Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceTaskView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceApiErrorEnvelope"
+                }
+              }
+            },
+            "description": "Workspace task resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceApiErrorEnvelope"
+                }
+              }
+            },
+            "description": "Task state conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceApiErrorEnvelope"
+                }
+              }
+            },
+            "description": "Invalid Workspace request"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Task",
+        "tags": [
+          "workspace-presentation-v1"
+        ]
+      }
+    },
+    "/api/tasks/{task_id}/commands/cancel": {
+      "post": {
+        "operationId": "cancel_task_api_tasks__task_id__commands_cancel_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "task_id",
+            "required": true,
+            "schema": {
+              "title": "Task Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceTaskView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceApiErrorEnvelope"
+                }
+              }
+            },
+            "description": "Workspace task resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceApiErrorEnvelope"
+                }
+              }
+            },
+            "description": "Task state conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceApiErrorEnvelope"
+                }
+              }
+            },
+            "description": "Invalid Workspace request"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Cancel Task",
+        "tags": [
+          "workspace-presentation-v1"
+        ]
+      }
+    },
+    "/api/tasks/{task_id}/commands/retry": {
+      "post": {
+        "operationId": "retry_task_api_tasks__task_id__commands_retry_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "task_id",
+            "required": true,
+            "schema": {
+              "title": "Task Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceTaskView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceApiErrorEnvelope"
+                }
+              }
+            },
+            "description": "Workspace task resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceApiErrorEnvelope"
+                }
+              }
+            },
+            "description": "Task state conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceApiErrorEnvelope"
+                }
+              }
+            },
+            "description": "Invalid Workspace request"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Retry Task",
+        "tags": [
+          "workspace-presentation-v1"
+        ]
+      }
+    },
+    "/api/tasks/{task_id}/interactions/{interaction_id}/responses": {
+      "post": {
+        "operationId": "submit_interaction_response_api_tasks__task_id__interactions__interaction_id__responses_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "task_id",
+            "required": true,
+            "schema": {
+              "title": "Task Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "interaction_id",
+            "required": true,
+            "schema": {
+              "title": "Interaction Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InteractionResponseRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceTaskView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceApiErrorEnvelope"
+                }
+              }
+            },
+            "description": "Workspace task resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceApiErrorEnvelope"
+                }
+              }
+            },
+            "description": "Task state conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceApiErrorEnvelope"
+                }
+              }
+            },
+            "description": "Invalid Workspace request"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Submit Interaction Response",
+        "tags": [
+          "workspace-presentation-v1"
+        ]
+      }
+    },
+    "/api/tasks/{task_id}/result": {
+      "get": {
+        "operationId": "get_task_result_api_tasks__task_id__result_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "task_id",
+            "required": true,
+            "schema": {
+              "title": "Task Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ResultView"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Response Get Task Result Api Tasks  Task Id  Result Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceApiErrorEnvelope"
+                }
+              }
+            },
+            "description": "Workspace task resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceApiErrorEnvelope"
+                }
+              }
+            },
+            "description": "Task state conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceApiErrorEnvelope"
+                }
+              }
+            },
+            "description": "Invalid Workspace request"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Task Result",
+        "tags": [
+          "workspace-presentation-v1"
+        ]
+      }
+    },
+    "/api/workspaces/{workspace_id}/task-view": {
+      "get": {
+        "operationId": "get_workspace_task_view_api_workspaces__workspace_id__task_view_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceTaskSurfaceView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceApiErrorEnvelope"
+                }
+              }
+            },
+            "description": "Workspace task resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceApiErrorEnvelope"
+                }
+              }
+            },
+            "description": "Task state conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceApiErrorEnvelope"
+                }
+              }
+            },
+            "description": "Invalid Workspace request"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Workspace Task View",
+        "tags": [
+          "workspace-presentation-v1"
+        ]
+      }
+    },
+    "/api/workspaces/{workspace_id}/tasks": {
+      "post": {
+        "operationId": "submit_task_api_workspaces__workspace_id__tasks_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitTaskRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceTaskView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceApiErrorEnvelope"
+                }
+              }
+            },
+            "description": "Workspace task resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceApiErrorEnvelope"
+                }
+              }
+            },
+            "description": "Task state conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceApiErrorEnvelope"
+                }
+              }
+            },
+            "description": "Invalid Workspace request"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Submit Task",
+        "tags": [
+          "workspace-presentation-v1"
+        ]
+      }
+    },
+    "/auth/email/resend": {
+      "post": {
+        "operationId": "resend_email_verification_auth_email_resend_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResendEmailVerificationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailVerificationResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Resend Email Verification",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/email/verify": {
+      "post": {
+        "operationId": "verify_email_auth_email_verify_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyEmailRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Verify Email",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "operationId": "login_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Login",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "operationId": "me_auth_me_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Me",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "operationId": "register_auth_register_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Register",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Health Health Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Health",
+        "tags": [
+          "system"
+        ]
+      }
+    }
+  }
+}

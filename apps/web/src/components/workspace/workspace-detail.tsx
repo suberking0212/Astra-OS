@@ -9,12 +9,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
-import { WorkspaceOverview } from "@/features/workspace/components/workspace-overview";
-import type {
-  HistoryTaskView,
-  TaskComposerView,
-  WorkspaceUnavailableView,
-} from "@/features/workspace/contract/view-model";
+import { ProductionWorkspaceTaskExperience } from "@/features/workspace/composition/production-workspace-task-experience";
 import { ApiError, getMe, type AuthUser } from "@/lib/api-client";
 import { clearStoredSession, getStoredSession, saveSession } from "@/lib/auth";
 import { routes } from "@/lib/routes";
@@ -24,29 +19,6 @@ export function WorkspaceDetail() {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const unavailableView: WorkspaceUnavailableView = {
-    title: "Task experience is not connected yet",
-    description:
-      "This production workspace already uses the Task-first shell, but task submission, interactions, progress, and results are still waiting for the formal presentation contract phases.",
-    note:
-      "Phase 1 keeps the production route honest: the structure is visible, while the real Task capability stays explicitly unavailable until later phases connect it.",
-  };
-
-  const composerView: TaskComposerView = {
-    currentRequirement: "Keep the production workspace explicit about Task capability being unavailable.",
-    placeholder: "Task submission will be enabled after the Workspace contract is implemented.",
-    prefill: "",
-    suggestedPrompts: [],
-    supportsAttachments: false,
-    disabled: true,
-    disabledReason:
-      "Task submission remains disabled in production until the formal Workspace presentation contract is connected in later phases.",
-    submitLabel: "Submit task unavailable",
-    addContextLabel: "Add context unavailable",
-  };
-
-  const history: HistoryTaskView[] = [];
 
   const handleUnauthorized = useCallback((err: unknown) => {
     if (err instanceof ApiError && err.status === 401) {
@@ -131,14 +103,7 @@ export function WorkspaceDetail() {
           ) : error ? (
             <div className="form-alert error">{error}</div>
           ) : (
-            <WorkspaceOverview
-              workspaceName="Astra Workspace"
-              statusLabel="Workspace shell"
-              task={null}
-              history={history}
-              composer={composerView}
-              unavailable={unavailableView}
-            />
+            <ProductionWorkspaceTaskExperience />
           )}
         </section>
       </section>

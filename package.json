@@ -12,7 +12,8 @@
     "baseline:check": "node scripts/check-rebuilt-baseline.mjs && node scripts/check-document-consistency.mjs",
     "docs:check": "node scripts/check-document-consistency.mjs",
     "typecheck": "pnpm --filter @astraos/web typecheck",
-    "lint": "pnpm --filter @astraos/web lint"
+    "lint": "pnpm --filter @astraos/web lint",
+    "contract:check": "pnpm --filter @astraos/web test:contract && ./scripts/tests/test-dev-process-cleanup.sh"
   },
   "dependencies": {
     "animejs": "^4.5.0"

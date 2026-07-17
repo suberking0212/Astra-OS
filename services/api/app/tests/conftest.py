@@ -12,6 +12,7 @@ os.environ["DATABASE_URL"] = os.environ.get(
     "postgresql+asyncpg://astraos:astraos@localhost:55432/astraos_test",
 )
 os.environ["EMAIL_VERIFICATION_ENABLED"] = "true"
+os.environ["ENABLE_MOCK_WORKSPACE_API"] = "true"
 
 
 def _parse_database_url(database_url: str) -> tuple[str, int, str, str, str]:
@@ -58,6 +59,7 @@ asyncio.run(_ensure_test_database())
 from app.db.models import Base, EmailVerificationCode, User  # noqa: E402
 from app.db.session import engine  # noqa: E402
 from app.main import app  # noqa: E402
+from app.mock.workspace_runtime import mock_workspace_runtime  # noqa: E402
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -92,6 +94,13 @@ def prevent_real_email(monkeypatch):
 
     monkeypatch.setattr("app.integrations.email_sender.EmailSender.send_verification_code", fake_send)
     return sent
+
+
+@pytest.fixture(autouse=True)
+def reset_mock_workspace_runtime():
+    mock_workspace_runtime.reset()
+    yield
+    mock_workspace_runtime.reset()
 
 
 @pytest.fixture
