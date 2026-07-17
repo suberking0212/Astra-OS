@@ -48,6 +48,7 @@ const supplementalAudit = "docs/Chinese/mvp/phase-acceptance/GATE_0_SUPPLEMENTAL
 const gate1Acceptance = "docs/Chinese/mvp/phase-acceptance/GATE_1_ACCEPTANCE.md";
 const gate1Reacceptance = "docs/Chinese/mvp/phase-acceptance/GATE_1_REACCEPTANCE.md";
 const gate2Acceptance = "docs/Chinese/mvp/phase-acceptance/GATE_2_ACCEPTANCE.md";
+const technicalDebtRegister = "docs/Chinese/mvp/TECHNICAL_DEBT_REGISTER_PHASE_0_TO_2.md";
 
 assertContains(architecture, "AstraOS 是 Enterprise AI Operating System。");
 assertContains(visual, "AstraOS 是 Enterprise AI Operating System。");
@@ -217,6 +218,17 @@ assertContains(gate2Acceptance, "Phase 3 状态：`not_started`");
 assertContains(gate2Acceptance, "对应实现 commit：`77f617e5c21d25afb70d54bd5b0d2ea35747330a`");
 assertContains(gate2Acceptance, "TD-04：project / workspace 命名");
 assertContains(gate2Acceptance, "TD-06：dev.sh 端口清理");
+assertContains(gate2Acceptance, "TD-01：CI、contract tests 与 required checks");
+assertContains(gate2Acceptance, "Ruleset `19083264`");
+assertContains(gate2Acceptance, "bypass_actors = []");
+for (const debtId of ["TD-01", "TD-02", "TD-03", "TD-04", "TD-05", "TD-06", "TD-07"]) {
+  assertContains(technicalDebtRegister, debtId, `${technicalDebtRegister} is missing ${debtId}`);
+}
+assertContains(technicalDebtRegister, "required status checks：`API`、`Web and docs`");
+assertContains(technicalDebtRegister, "Phase 1 和 Phase 2 没有新增编号技术债务");
+assertContains(phased, "TECHNICAL_DEBT_REGISTER_PHASE_0_TO_2.md");
+assertContains("README.md", "ASTRAOS_FORCE_PORT_CLEANUP=true");
+assertContains("README.md", "TECHNICAL_DEBT_REGISTER_PHASE_0_TO_2.md");
 assertContains(
   gate1Reacceptance,
   "对应整改实现 commit：`8b07f5ccb862989ebe402dac8323b65c136d9548`",

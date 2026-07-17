@@ -8,10 +8,12 @@ AI Employee is an enterprise business responsibility and governance object defin
 
 - JWT authentication
 - Registration, login, email verification, and account identity
-- A single Workspace shell entry backed only by the Auth API
+- A single Workspace shell using the frozen `workspace-presentation-v1` contract
+- Production `ApiWorkspaceTaskRepository` and isolated Preview/Test `MockWorkspaceTaskRepository`
+- A default-off in-memory Phase 2 Mock API for task-loop contract validation
 - Preview assets isolated from production and disabled by default
 
-Task execution, Interaction Runtime, Presentation View Models, and Executors are not part of the current production path.
+Real Runtime persistence, LLM execution, Tools, Executors, Governance writes, and external side effects are not part of the current production path. Phase 2 task interactions and results are isolated Mock behavior only.
 
 ## Local Development
 
@@ -47,7 +49,7 @@ chmod +x scripts/dev.sh
 
 The script performs the complete local startup sequence:
 
-1. Stops API, Web, and log processes recorded by the previous run, then releases the configured API and Web ports.
+1. Stops API, Web, and log processes that are both recorded by the previous run and verified as AstraOS-owned. Unknown port owners are diagnosed and left running unless force cleanup is explicitly enabled.
 2. Creates `.env` from `.env.example` when `.env` does not exist.
 3. Starts PostgreSQL and Qdrant with Docker Compose and waits for them to become healthy.
 4. Installs frontend dependencies when they are missing.
@@ -55,7 +57,7 @@ The script performs the complete local startup sequence:
 6. Applies all Alembic database migrations.
 7. Starts FastAPI and Next.js, then waits for both applications to respond.
 
-Process IDs are stored under `.logs/pids/`. Starting the script again automatically stops the previous FastAPI and Next.js processes before creating new ones. Processes occupying the configured ports are also terminated as a fallback.
+Process IDs are stored under `.logs/pids/`. Starting the script again automatically stops verified previous FastAPI and Next.js processes before creating new ones. If an unrelated or unverified process owns a configured port, startup reports its PID and command, then exits without terminating it. Set `ASTRAOS_FORCE_PORT_CLEANUP=true` only when you explicitly want to force cleanup of an unknown port owner.
 
 When startup succeeds, open:
 
@@ -92,6 +94,14 @@ ENABLE_WORKSPACE_PREVIEWS=true
 ```
 
 Preview assets are disabled by default and are not part of the production Workspace data path.
+
+To enable the isolated Phase 2 in-memory Workspace API locally, set:
+
+```text
+ENABLE_MOCK_WORKSPACE_API=true
+```
+
+This switch is disabled by default and must remain disabled in production deployments.
 
 ## Architecture
 
@@ -142,6 +152,10 @@ Authoritative supporting documents, in precedence order:
 Phase 0 baseline and inventory:
 
 - `docs/Chinese/mvp/REBUILT_ENGINEERING_BASELINE.md`
+
+Phase 0～2 technical debt register and current evidence:
+
+- `docs/Chinese/mvp/TECHNICAL_DEBT_REGISTER_PHASE_0_TO_2.md`
 
 Historical reference only:
 

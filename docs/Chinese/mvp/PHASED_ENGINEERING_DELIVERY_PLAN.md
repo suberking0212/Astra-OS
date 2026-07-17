@@ -4,6 +4,8 @@
 
 本文档定义 AstraOS 大范围重构后的新工程基线，以及从 Phase 0 到第一个可评估、可治理的真实 AI Employee 的交付顺序。
 
+Phase 0～2 技术债务的原始期限、历史关闭节点和当前落实证据统一索引见 `TECHNICAL_DEBT_REGISTER_PHASE_0_TO_2.md`；阶段状态仍只以本文件和对应 Gate 验收记录为准。
+
 当前所有旧实现、旧 Preview、旧启动文案和旧 Phase 标记都视为重构前遗留资产。它们可以被盘点、复用或删除，但不能作为新 Phase 已完成的证据。
 
 主架构以 `ARCHITECTURE_BASELINE.md` 为准。MVP 与长期能力的实施深度以 `MVP_SCOPE_AND_LONG_TERM_ROADMAP.md` 为准。任务展示语义以 `TASK_PRESENTATION_CONTRACT.md` 为准。Runtime 规格以 `RUNTIME_REMEDIATION_SPEC.md` 为准。Workspace 视觉边界以 `WORKSPACE_VISUAL_BASELINE.md` 为准。本文件只定义阶段、依赖关系、交付物和验收 Gate，不得把路线图中的 `[MVP-P2]`、`[MVP-CONTRACT]`、`[POST-MVP-P5]` 或 `[DEFERRED]` 能力提前列为 Phase 1 必选实现。

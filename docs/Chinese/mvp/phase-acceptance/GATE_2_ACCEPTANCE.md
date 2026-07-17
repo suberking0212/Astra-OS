@@ -78,6 +78,26 @@ OpenAPI 未暴露 `RuntimeInvocation`、`ToolCall`、`WorkflowRun`、`StepRun`�
 
 ## 5. 技术债务关闭
 
+### TD-01：CI、contract tests 与 required checks
+
+状态：`closed`。
+
+- Phase 1 已建立 `Web and docs`、`API` 两个 CI job；Phase 2 已加入 Repository contract tests 和 TD-06 shell contract test。
+- 2026-07-17 14:09 +08:00 使用 GitHub CLI 核验 Repository Ruleset `19083264`（`Protect workspace-main`）为 `active`。
+- Ruleset 严格要求 `API`、`Web and docs` 两项 status checks，`strict_required_status_checks_policy = true`。
+- Ruleset 要求 Pull Request，禁止 deletion 和 non-fast-forward；`bypass_actors = []`，当前用户不能绕过。
+- 核验命令：`gh api repos/suberking0212/Astra-OS/rulesets/19083264`。
+
+Gate 1 重新验收中“当时没有 Git remote”的陈述保留为历史事实；本节补充远程仓库接入后的实际配置证据。
+
+### TD-03：View Model 正式冻结
+
+状态：`closed`。
+
+- Gate 1 已完成 View Model 与 Mock fixture 的边界迁移。
+- Gate 2 已冻结 `workspace-presentation-v1` 的 TypeScript、Pydantic、OpenAPI、Repository 和 Projector boundary。
+- Mock/API Repository 共同 contract suite 与 OpenAPI freeze test 均通过。
+
 ### TD-04：project / workspace 命名
 
 状态：`closed`。
@@ -107,6 +127,6 @@ OpenAPI 未暴露 `RuntimeInvocation`、`ToolCall`、`WorkflowRun`、`StepRun`�
 
 ## 7. 最终结论
 
-Gate 2 全部条件通过，TD-04 与 TD-06 已关闭，`workspace-presentation-v1` 正式冻结。Phase 2 更新为 `accepted`，Phase 3 解除阻塞并进入 `not_started`；开始 Phase 3 前仍需单独正式启动，不能把本次 Mock 能力解释为真实 Runtime 已存在。
+Gate 2 全部条件通过；TD-01 的 Phase 2 contract/required-checks 收尾、TD-03 契约冻结、TD-04 命名决策与 TD-06 端口清理均已关闭，`workspace-presentation-v1` 正式冻结。Phase 2 更新为 `accepted`，Phase 3 解除阻塞并进入 `not_started`；开始 Phase 3 前仍需单独正式启动，不能把本次 Mock 能力解释为真实 Runtime 已存在。
 
-本记录只证明实现 commit `77f617e5c21d25afb70d54bd5b0d2ea35747330a` 在上述范围内通过 Gate 2。
+本记录的代码与契约结论绑定实现 commit `77f617e5c21d25afb70d54bd5b0d2ea35747330a`；TD-01 的 GitHub Ruleset 条目是 2026-07-17 在远程仓库完成的补充外部核验证据。
