@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
-from app.api.routes import auth
+from app.composition.production import compose_production
 from app.core.config import settings
 from app.db.session import engine
 
@@ -40,7 +40,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(auth.router)
+compose_production(app)
+if settings.enable_mock_workspace_api:
+    from app.composition.mock_workspace import compose_mock_workspace
+
+    compose_mock_workspace(app)
 
 
 @app.get("/health", tags=["system"])

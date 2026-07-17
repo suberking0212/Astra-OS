@@ -14,15 +14,9 @@
 
 ## 1. 当前真实状态
 
-当前正式 Workspace 只读取 Auth API。正式入口显示单一 Workspace 身份、明确的 Task unavailable 状态和禁用的 Task Composer。
+当前正式 Workspace 使用 `ApiWorkspaceTaskRepository` 和冻结的 `workspace-presentation-v1`，可以在显式启用隔离 Mock API 时完成 Phase 2 Task 闭环；开关默认关闭时显示明确的 API unavailable 状态。Preview/test composition root 使用独立 `MockWorkspaceTaskRepository`。
 
-正式页面当前不具备：
-
-- Task 提交。
-- Interaction、Approval 或恢复。
-- Runtime 进度。
-- TaskResult。
-- Model / Executor 选择或 trace 展示。
+当前闭环具备 Task 提交、reference metadata、context、Mock Approval、reject、retry、cancel、result 和 failure recovery，但仍不具备真实 Runtime、真实 Governance、Tool、Executor 或外部副作用。
 
 相关源码：
 
@@ -60,7 +54,7 @@ Mock、fixture 和 Preview 只能由专用 composition root 装配，不能被�
 - Sidebar：Workspace 导航、当前 Workspace、账号和退出。
 - Topbar：Workspace 身份和少量全局动作。
 - Main Surface：Task-first 内容区域。
-- Composer Area：正式契约接入前保持 unavailable；接入后由 Repository 提交 Task。
+- Composer Area：只通过 Repository 提交 Task 和 reference metadata。
 
 现有 `agent-*` CSS 类名是历史样式命名，不代表产品应展示 Agent、Harness、模型循环或内部 Thinking。
 
@@ -142,7 +136,7 @@ Result 至少表达：
 ## 8. 实现和验收规则
 
 - Phase 1 可以建立组件边界和 View Model 草案，但不宣称字段冻结。
-- Phase 2 经 Mock 闭环、OpenAPI、Pydantic、TypeScript 和 contract tests 验证后冻结契约。
+- Phase 2 已通过 Mock 闭环、OpenAPI、Pydantic、TypeScript 和共同 contract tests 冻结 `workspace-presentation-v1`；破坏性变更必须版本化或提供迁移方案。
 - Needs Attention、Approval、Result 和 History 属于正式目标组件，不需要另立一份替代设计才能开始 Phase 1 拆分。
 - 正式 Workspace 不得通过环境变量、`if (isMock)` 或动态 import 选择 Mock 数据源。
 - 用户无需查看 Console、Runtime trace 或内部对象即可理解当前状态和下一步。

@@ -2,6 +2,7 @@ import { Clock3 } from "lucide-react";
 
 import type {
   HistoryTaskView,
+  InteractionAction,
   TaskComposerView,
   WorkspacePreviewStateView,
   WorkspaceTaskView,
@@ -21,6 +22,11 @@ type WorkspaceOverviewProps = {
   history: HistoryTaskView[];
   composer: TaskComposerView;
   unavailable?: WorkspaceUnavailableView;
+  busy?: boolean;
+  onSubmitTask?: (intent: string, references: Array<{ name: string; mediaType: string | null }>) => Promise<void>;
+  onInteractionAction?: (interactionId: string, action: InteractionAction, data: Record<string, unknown>) => Promise<void>;
+  onRetry?: () => Promise<void>;
+  onCancel?: () => Promise<void>;
 };
 
 export function WorkspaceOverview({
@@ -31,6 +37,11 @@ export function WorkspaceOverview({
   history,
   composer,
   unavailable,
+  busy = false,
+  onSubmitTask,
+  onInteractionAction,
+  onRetry,
+  onCancel,
 }: WorkspaceOverviewProps) {
   return (
     <>
@@ -59,9 +70,9 @@ export function WorkspaceOverview({
 
         {task ? (
           <div className="workspace-task-grid">
-            <ActiveTaskPanel task={task} />
+            <ActiveTaskPanel task={task} busy={busy} onRetry={onRetry} onCancel={onCancel} />
             {task.progress ? <TaskProgressPanel progress={task.progress} /> : null}
-            {task.interactions.length > 0 ? <NeedsAttentionPanel interactions={task.interactions} /> : null}
+            {task.interactions.length > 0 ? <NeedsAttentionPanel interactions={task.interactions} busy={busy} onAction={onInteractionAction} /> : null}
             <ResultHistoryPanel result={task.result} history={history} />
           </div>
         ) : unavailable ? (
@@ -83,7 +94,7 @@ export function WorkspaceOverview({
         ) : null}
       </section>
 
-      <TaskComposer composer={composer} />
+      <TaskComposer composer={composer} busy={busy} onSubmit={onSubmitTask} />
     </>
   );
 }

@@ -20,6 +20,7 @@ LOCKED_PYTHON_BIN="${LOCKED_PYTHON_BIN:-${HOME}/miniconda3/envs/${LOCKED_CONDA_E
 
 cd "$ROOT_DIR"
 mkdir -p "$LOG_DIR" "$PID_DIR"
+source "${ROOT_DIR}/scripts/lib/dev-processes.sh"
 
 require_command() {
   local command_name="$1"
@@ -114,60 +115,10 @@ read_env_value() {
 ENABLE_WORKSPACE_PREVIEWS="${ENABLE_WORKSPACE_PREVIEWS:-$(read_env_value ENABLE_WORKSPACE_PREVIEWS)}"
 ENABLE_WORKSPACE_PREVIEWS="${ENABLE_WORKSPACE_PREVIEWS:-false}"
 
-stop_port() {
-  local port="$1"
-  local pids
-  pids="$(lsof -tiTCP:"$port" -sTCP:LISTEN 2>/dev/null || true)"
-
-  if [ -z "$pids" ]; then
-    return
-  fi
-
-  echo "Stopping stale local process on port ${port}: ${pids}"
-  kill $pids 2>/dev/null || true
-  sleep 0.8
-
-  pids="$(lsof -tiTCP:"$port" -sTCP:LISTEN 2>/dev/null || true)"
-  if [ -n "$pids" ]; then
-    echo "Force stopping process on port ${port}: ${pids}"
-    kill -9 $pids 2>/dev/null || true
-  fi
-}
-
-stop_pid_file() {
-  local pid_file="$1"
-  local label="$2"
-  local pid
-
-  if [ ! -f "$pid_file" ]; then
-    return
-  fi
-
-  pid="$(tr -dc '0-9' <"$pid_file")"
-  rm -f "$pid_file"
-
-  if [ -z "$pid" ] || ! kill -0 "$pid" 2>/dev/null; then
-    return
-  fi
-
-  echo "Stopping previous ${label} process: ${pid}"
-  kill "$pid" 2>/dev/null || true
-
-  for _ in $(seq 1 20); do
-    if ! kill -0 "$pid" 2>/dev/null; then
-      return
-    fi
-    sleep 0.1
-  done
-
-  echo "Force stopping previous ${label} process: ${pid}"
-  kill -9 "$pid" 2>/dev/null || true
-}
-
 cleanup_previous_run() {
-  stop_pid_file "$API_LOG_TAIL_PID_FILE" "API log tail"
-  stop_pid_file "$API_PID_FILE" "FastAPI"
-  stop_pid_file "$WEB_PID_FILE" "Next.js"
+  stop_pid_file "$API_LOG_TAIL_PID_FILE" "API log tail" "tail -n +1 -F ${API_LOG_FILE}"
+  stop_pid_file "$API_PID_FILE" "FastAPI" "uvicorn app.main:app"
+  stop_pid_file "$WEB_PID_FILE" "Next.js" "next dev"
   stop_port "$API_PORT"
   stop_port "$WEB_PORT"
 }

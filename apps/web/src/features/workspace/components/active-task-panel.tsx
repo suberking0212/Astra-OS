@@ -4,9 +4,12 @@ import type { WorkspaceTaskView } from "@/features/workspace/contract/view-model
 
 type ActiveTaskPanelProps = {
   task: WorkspaceTaskView;
+  busy?: boolean;
+  onRetry?: () => Promise<void>;
+  onCancel?: () => Promise<void>;
 };
 
-export function ActiveTaskPanel({ task }: ActiveTaskPanelProps) {
+export function ActiveTaskPanel({ task, busy, onRetry, onCancel }: ActiveTaskPanelProps) {
   return (
     <section className="workspace-task-card workspace-task-card-wide" aria-labelledby="active-task-title">
       <div className="workspace-task-card-head">
@@ -42,6 +45,10 @@ export function ActiveTaskPanel({ task }: ActiveTaskPanelProps) {
       <div className="workspace-task-meta">
         <Clock3 className="icon" aria-hidden="true" />
         <span>{task.progressSummary}</span>
+      </div>
+      <div className="workspace-action-row" aria-label="Task actions">
+        {task.status === "failed" && onRetry ? <button className="workspace-action-button primary" disabled={busy} onClick={() => void onRetry()} type="button">Retry task</button> : null}
+        {!['completed', 'cancelled'].includes(task.status) && onCancel ? <button className="workspace-action-button secondary" disabled={busy} onClick={() => void onCancel()} type="button">Cancel task</button> : null}
       </div>
     </section>
   );

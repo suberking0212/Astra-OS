@@ -46,11 +46,11 @@ ARCHITECTURE_BASELINE.md
 | 正式 API 业务模块 | `services/api/app/modules/auth` | 认证与邮箱验证 |
 | 正式数据库模型 | `services/api/app/db/models.py` | `users`、`email_verification_codes` |
 | 数据迁移 | `services/api/alembic/versions/20260714_0001_rebuild_auth_workspace_baseline.py`、`20260716_0002_remove_projects_workspace_container.py` | 新基线首个 Alembic revision 建立 Auth 基线；后续 revision 删除脱节的 `projects` 容器表 |
-| Shared package | `packages/shared` | 保留为空的公开共享边界；不得存放 Phase 状态；Phase 2 才冻结正式共享契约 |
+| Shared package | `packages/shared` | 承载冻结的 `workspace-presentation-v1` 公开类型；不得存放 Phase 状态或 Runtime DTO |
 | 本地启动 | `scripts/dev.sh` | 启动 PostgreSQL 与 Qdrant、执行 Alembic、启动 FastAPI 与 Next.js；只公布真实存在的入口 |
 | Phase 状态 | `PHASED_ENGINEERING_DELIVERY_PLAN.md` 第 1 节 | 唯一阶段状态来源 |
 
-明确回答：当前真实入口是 Workspace 路由与 FastAPI Auth 路由；真实数据源是 PostgreSQL 中的 `users`、`email_verification_codes` 表；当前尚无正式 Task Presentation API 契约，Phase 1 只形成语义草案，Phase 2 验证后才冻结 OpenAPI/Pydantic/TypeScript 契约。
+明确回答：当前真实入口是 Workspace 路由、FastAPI Auth 路由和默认关闭的 Phase 2 Workspace Mock API；真实持久化数据源仍只有 PostgreSQL 中的 `users`、`email_verification_codes` 表。Task 数据只存在于隔离内存 Mock Runtime，不写数据库；正式 Presentation API 契约已冻结为 `workspace-presentation-v1`，由 OpenAPI/Pydantic/TypeScript 共同约束。
 
 ## 3. 目录与依赖边界
 
@@ -105,7 +105,7 @@ packages/shared
 | `apps/web/src/components/workspace/workspace-detail.tsx` 的本地 task/demo 状态 | 已从正式页面移除；Phase 1 只能通过正式 View Model props 或隔离 Preview 表达任务状态 |
 | `/workspace/[workspaceId]` 动态入口 | 已收口删除，避免继续暴露旧容器管理语义 |
 | `apps/web/src/lib/api-client.ts` 的 planned action mapping | 已删除，避免不存在的 endpoint 被当作契约；Phase 2 由验证后的 OpenAPI 重新生成/实现 |
-| `packages/shared` | 保留包边界，移除 Phase 常量；Phase 2 再承载冻结后的公开 contract types |
+| `packages/shared` | 承载 `workspace-presentation-v1` 公开 contract types；继续禁止 Phase 状态和 Runtime DTO |
 | `apps/web/src/components/workspace/assistant-rich-content.tsx` | 可作为通用结果内容 renderer 候选，Phase 1 必须在 View Model/组件边界下复核后接入 |
 | 当前 Workspace 大型组件 | Phase 1 按 Task Composer、Active Task、Needs Attention、Result/History 拆分，不在 Phase 0 提前冻结 props |
 
@@ -179,4 +179,4 @@ email_verification_codes
 
 原 Gate 0 验收在实现 commit `d1c3e21f686c292a05988d2b48595bc81eb41504` 上完成，但后续完整文档审计确认产品定位、主权、RuntimeInvocation、Executor 分类和 Presentation 字段冲突在该 commit 中已经存在，因此原验收记录 `phase-acceptance/GATE_0_ACCEPTANCE.md` 已标记为 `superseded`。
 
-文档纠偏基线 commit `0953b8c62b03922e581d9374d6f51ebf0f37798b` 已完成重新验证，正式重新验收记录位于 `phase-acceptance/GATE_0_REACCEPTANCE.md`。后续发现的 Human routing、Governance、Queue 和 Interaction 基础类型缺口记录在 `phase-acceptance/GATE_0_SUPPLEMENTAL_CONSISTENCY_AUDIT.md`；该补充审计已绑定内容 commit `4b91137a221cc598e6ecb5ae01de15f3599eb005` 并标记为 `accepted`，但不单独改变 Gate 状态。当前 Phase 0 和 Phase 1 状态均为 `accepted`；Gate 1 首次未通过记录保留在 `phase-acceptance/GATE_1_ACCEPTANCE.md`，整改后的正式通过记录位于 `phase-acceptance/GATE_1_REACCEPTANCE.md`。Phase 2 已解除阻塞并回到 `not_started`。后续状态仍只能由 `PHASED_ENGINEERING_DELIVERY_PLAN.md` 和对应正式验收记录证明；本文档、Preview、补充审计或代码常量不能单独证明 Phase 状态。
+文档纠偏基线 commit `0953b8c62b03922e581d9374d6f51ebf0f37798b` 已完成重新验证，正式重新验收记录位于 `phase-acceptance/GATE_0_REACCEPTANCE.md`。后续发现的 Human routing、Governance、Queue 和 Interaction 基础类型缺口记录在 `phase-acceptance/GATE_0_SUPPLEMENTAL_CONSISTENCY_AUDIT.md`；该补充审计已绑定内容 commit `4b91137a221cc598e6ecb5ae01de15f3599eb005` 并标记为 `accepted`，但不单独改变 Gate 状态。当前 Phase 0 和 Phase 1 状态均为 `accepted`；Gate 1 首次未通过记录保留在 `phase-acceptance/GATE_1_ACCEPTANCE.md`，整改后的正式通过记录位于 `phase-acceptance/GATE_1_REACCEPTANCE.md`。Phase 2 已正式启动并进入 `in_progress`；是否 accepted 仍只能由 `PHASED_ENGINEERING_DELIVERY_PLAN.md` 和 Gate 2 正式验收记录证明。本文档、Preview、补充审计或代码常量不能单独证明 Phase 状态。

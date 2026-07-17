@@ -1,2 +1,1 @@
-// Public cross-application contracts will be exported here after validation.
-export {};
+export * from "./workspace-presentation-v1";

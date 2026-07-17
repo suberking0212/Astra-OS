@@ -25,7 +25,9 @@ function assert(condition, message) {
 const productionWebFiles = filesUnder("apps/web/src").filter(
   (path) =>
     !path.startsWith("apps/web/src/mock/") &&
-    !path.includes("/phase1-preview/") &&
+    !path.includes("-preview/") &&
+    !path.endsWith(".test.ts") &&
+    !path.endsWith(".test.tsx") &&
     /\.(ts|tsx)$/.test(path),
 );
 
@@ -58,6 +60,25 @@ assert(
     previewPage.includes("notFound()"),
   "preview route is not disabled by default",
 );
+
+const phase2PreviewPage = read("apps/web/src/app/(workspace)/workspace/phase2-preview/page.tsx");
+assert(
+  phase2PreviewPage.includes('export const dynamic = "force-dynamic"') &&
+    phase2PreviewPage.includes('process.env.ENABLE_WORKSPACE_PREVIEWS !== "true"') &&
+    phase2PreviewPage.includes("notFound()"),
+  "Phase 2 preview route is not disabled by default",
+);
+
+const productionApiFiles = filesUnder("services/api/app").filter(
+  (path) =>
+    path.endsWith(".py") &&
+    !path.startsWith("services/api/app/mock/") &&
+    path !== "services/api/app/composition/mock_workspace.py" &&
+    !path.startsWith("services/api/app/tests/"),
+);
+for (const path of productionApiFiles) {
+  assert(!/from app\.mock|import app\.mock/.test(read(path)), `${path} imports the isolated mock module`);
+}
 
 const startupScript = read("scripts/dev.sh");
 assert(!/\/admin\/projects/.test(startupScript), "startup output advertises removed Admin routes");
